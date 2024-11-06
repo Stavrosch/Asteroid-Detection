@@ -12,16 +12,17 @@ from astropy.visualization.mpl_normalize import ImageNormalize
 from photutils.aperture import CircularAperture
 from astropy.table import QTable
 from matplotlib.lines import Line2D
-
+import os
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 from matplotlib.figure import Figure
 from tkinter import ttk
 import report_pop_up as popup
+import traceback
 
 def create_window(parent):
     new_window = tk.Toplevel(parent)
     new_window.title("Asteroid Detection Window")
-    new_window.geometry("800x600")
+    new_window.geometry("1000x800")
 
     # Row 1: Label and button next to each other
     label_frame = tk.Frame(new_window)
@@ -56,11 +57,11 @@ def create_window(parent):
     run_button = tk.Button(new_window, text="Run Detection", state=tk.DISABLED, command=lambda: show_progress_and_run(new_window, plot_frame,file_path,mag_slider.get()))
     run_button.pack(anchor='n',pady=2)
 
-    plot_label = tk.Label(new_window, text=f"Asteroid Detection Plot",font=("Helvetica", 18))
-    plot_label.pack(anchor='n',pady=5)
+    plot_label = tk.Label(new_window, text=f"Asteroid Detection",font=("Helvetica", 18))
+    plot_label.pack(anchor='n',pady=0)
     # Frame for embedding the plot
     plot_frame = tk.Frame(new_window)
-    plot_frame.pack(pady=5, fill=tk.BOTH, expand=True)
+    plot_frame.pack(fill=tk.BOTH, expand=True)
     
     
     # def update_mag_value(val):
@@ -76,7 +77,8 @@ def choose_file(window,threshold,plot_frame):
         title="Select a FITS file"
     )
     if file_path:
-        file_label.config(text=f"Selected File: {file_path}", fg="green")
+        file_name = os.path.basename(file_path)
+        file_label.config(text=f"Selected File: {file_name}", fg="green")
         run_button.config(state=tk.NORMAL)
     else:
         messagebox.showwarning("No File Selected", "Please select a valid FITS file.")
@@ -144,24 +146,24 @@ def run_asteroid_detection(progress_bar,progress_label,progress_window,image_pat
 
 
         ### FOV Query for Stars ###
-        focal_length=620 #Focal length of Rasa11 CYPRUS
+        focal_length = 620 #Focal length of Rasa11 CYPRUS
         w,h = ut.FOV_calc(NAXIS1,NAXIS2,XPIXSZ,YPIXSZ,focal_length)
-        RA=ut.RA_deg(RA)
-        DEC=ut.Decl_deg(DEC)
+        RA = ut.RA_deg(RA)
+        DEC = ut.Decl_deg(DEC)
 
-        center = SkyCoord(RA, DEC, unit=["deg", "deg"])
-
-        fov = max(w,h)
+        fov = 1.5*max(w,h)
         #wcs,radec,stars = ut.plate_solve(image_path,fov,RA,DEC)
-        wcs= WCS(image.header)
+        wcs = WCS(image.header)
+        
+        ra_c,dec_c = ut.image_center(NAXIS1,NAXIS2,wcs)
 
 
         # 2. Processing data
         progress_label.config(text="Quering stars...")
         progress_bar['value'] = 40
         progress_bar.update()
-
-        r=ut.Query_FOV_stars2(RA,DEC,width=1.5*w,height=1.5*h)
+        
+        r = ut.Query_FOV_stars2(ra_c,dec_c,width=fov,height=fov)
         rad = np.array(r['ra'])
         ded = np.array(r['dec'])
         rmag = np.array(r['phot_g_mean_mag'])
@@ -174,7 +176,7 @@ def run_asteroid_detection(progress_bar,progress_label,progress_window,image_pat
         rad_f = []
         ded_f = []
         rmag_f = []
-        mag_max = 17
+        mag_max = 18
         for i in range(len(rmag)):
             if rmag[i] < mag_max:
                 rad_f.append(rad[i])
@@ -184,11 +186,10 @@ def run_asteroid_detection(progress_bar,progress_label,progress_window,image_pat
         ### From coordinate to pixel ###
         Xstar = []
         Ystar = []
-        border = min(NAXIS1,NAXIS2)
         for ra1,dec1 in zip(rad_f,ded_f):
             c = SkyCoord(ra1, dec1, frame='icrs', unit='deg')
             x, y = wcs.world_to_pixel(c)
-            if x>0 and y>0 and x<border and y<border:
+            if x>0 and y>0 and x<NAXIS2 and y<NAXIS2:
                 Xstar.append(x)
                 Ystar.append(y)
                 
@@ -196,11 +197,11 @@ def run_asteroid_detection(progress_bar,progress_label,progress_window,image_pat
         gaia_centroids.sort('xcentroid')
 
         center1=SkyCoord(RA, DEC, frame='icrs', unit='deg')
-        x_c, y_c = wcs.world_to_pixel(center1)
 
         # Get Sources Detections
         data = image.data[0:NAXIS1,0:NAXIS2]  
         detected_sources = ut.blob_detection(data,threshold)
+        radi = detected_sources['radius']
         detected_sources = detected_sources[
             (detected_sources['xcentroid'] > 10) &
             (detected_sources['xcentroid'] < (NAXIS1 - 10)) &
@@ -209,16 +210,6 @@ def run_asteroid_detection(progress_bar,progress_label,progress_window,image_pat
         xcentroid_blob = detected_sources['xcentroid']
         ycentroid_blob = detected_sources['ycentroid']
 
-
-
-        # # Plot detected sources (blobs)
-        # plt.figure(figsize=(8, 8))
-        # plt.imshow(data, cmap='plasma', origin='lower')
-        # plt.scatter(xcentroid_blob, ycentroid_blob, s=50, facecolors='none', edgecolors='red', label='Detected Sources (Blobs)')
-        # plt.colorbar()
-        # plt.title("Source Detection using Blob Detection (LoG)")
-        # plt.legend(loc='upper right')
-        # plt.show()
 
         duplicate_indices = []
         for i in range(len(detected_sources) - 1):
@@ -229,7 +220,7 @@ def run_asteroid_detection(progress_bar,progress_label,progress_window,image_pat
 
         # Remove duplicates
         detected_sources = detected_sources[~np.in1d(range(len(detected_sources)), duplicate_indices)]
-
+    
 
         #sources.pprint(max_width=74)   
         positions = np.transpose((detected_sources['xcentroid'], detected_sources['ycentroid']))
@@ -279,17 +270,8 @@ def run_asteroid_detection(progress_bar,progress_label,progress_window,image_pat
             for xg,yg in gaia_centroids:
                 if abs(xg-x)<5 and abs(yg-y)<5:
                     P = P[P['xcentroid'] != x]
-                    # print('Removed')
-                    # print(x,y)
                     STARS.append((x,y))
-                #elif abs(xg-x)>5 and abs(yg-y)>5:
-                # elif x<5 or y<5:
-                #     P = P[P['xcentroid'] != x]
-                #     print('Removed')
-                #     print(x,y)
-        # print('Sources left')
-        # print(P)           
-        # print('There are',len(P),'sources that do not correspond to stars.')
+
         # Convert the list of tuples to a set for faster lookups
         stars_set = set(STARS)
 
@@ -310,7 +292,7 @@ def run_asteroid_detection(progress_bar,progress_label,progress_window,image_pat
         for widget in plot_frame.winfo_children():
             widget.destroy()
 
-        fig = Figure(figsize=(6, 6), dpi=100)
+        fig = Figure(figsize=(5, 5), dpi=100)
         ax = fig.add_subplot(111)
 
         # Adjust the subplot to make space for the legend
@@ -322,6 +304,7 @@ def run_asteroid_detection(progress_bar,progress_label,progress_window,image_pat
         ax.scatter(P['xcentroid'], P['ycentroid'], s=50, color='green', marker='x', label='Possible Asteroids')
         ax.scatter(filtered_d_sources['xcentroid'], filtered_d_sources['ycentroid'], s=50, color='magenta', marker='+', label='Asteroids filtered')
         ax.scatter([], [], color='red', label='Apertures')
+        ax.text(10, 10, f'FOV: {w:.2f} x {h:.2f} deg', color='red', fontsize=12, bbox=dict(facecolor='white', alpha=0.8))
         apertures1.plot(ax=ax, color='red', lw=1.5, alpha=0.5)
 
         # Adjust the legend to the right, outside the plot
@@ -332,62 +315,57 @@ def run_asteroid_detection(progress_bar,progress_label,progress_window,image_pat
         canvas.draw()
 
         # Add the canvas to the Tkinter frame
-        canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+        canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=True, padx=0, pady=0)
 
         # Add the navigation toolbar for the plot
         toolbar = NavigationToolbar2Tk(canvas, plot_frame)
         toolbar.update()
-        canvas.get_tk_widget().pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-
-
-        # Add the navigation toolbar for the plot
-        toolbar = NavigationToolbar2Tk(canvas, plot_frame)
-        toolbar.update()
-        #canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+        toolbar.pack(side=tk.TOP,fill=tk.X)
+        
+        plot_frame.pack_propagate(False)
         
         # Coordinates list on the right with a checkbox and a "Report" button
         coord_frame = tk.Frame(plot_frame)
-        coord_frame.pack(side=tk.RIGHT, padx=10)
+        coord_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=False)
         
-        print('There are',len(filtered_d_sources),'sources that do not correspond to stars.')
-        # print(filtered_d_sources)
-
-        # # Matrix P IS SOURCES-GAIA=POTENTIAL_ASTEROIDS
-        # plt.figure(figsize=(8, 8))
-        # plt.imshow(data, cmap='Greys', origin='lower', norm=norm, interpolation='nearest')
-        # plt.colorbar()
-        # plt.scatter(Xstar, Ystar, s=1, color='blue', label='Stars')
-        # plt.scatter(P['xcentroid'], P['ycentroid'], s=50, color='green', marker='x', label='Possible Asteroids')
-        # plt.scatter(filtered_d_sources['xcentroid'], filtered_d_sources['ycentroid'],s=50,color='magenta',marker = '+',label = 'Asteroids filtered')
-        # plt.scatter([], [], color='red', label='Apertures')
-        # apertures1.plot(color='red', lw=1.5, alpha=0.5)
-        # plt.legend(title='Legend', loc='upper right')
-        # plt.tight_layout()
-        # plt.show()
-
-        ### Get Potential Asteroid Coords ###
-        RAs=[]
-        Decs=[]
-        for i in range(len(P)):
-            x=P['xcentroid'][i]
-            y=P['ycentroid'][i]
-            coord=wcs.pixel_to_world(x,y)
-            ra=ut.ra_hms(coord.ra.deg)
-            dec=ut.dec_dms(coord.dec.deg)
-            RAs.append(ra)
-            Decs.append(dec)
-
-        print('The coordinates for the Possible asteroids:',RAs,Decs)
+        check_vars = []
+        # Display each detected asteroid's coordinates in the coord_frame
+        for i in range(len(filtered_d_sources)):
+            x = filtered_d_sources['xcentroid'][i]
+            y = filtered_d_sources['ycentroid'][i]
+            coord_text = f"Asteroid {i+1}: X={x:.2f}, Y={y:.2f}"
+            check_var = tk.IntVar()  # Variable to track the checkbox state
+            check_vars.append(check_var)
+            coord_frame_row = tk.Frame(coord_frame)
+            coord_frame_row.pack(anchor='w')
+            coord_label = tk.Label(coord_frame_row, text=coord_text)
+            coord_label.pack(side=tk.LEFT)
+            checkbox = tk.Checkbutton(coord_frame_row, variable=check_var)
+            checkbox.pack(side=tk.RIGHT)
         
-        # Add a checkbox (for selection purposes, if needed)
-        checkbox_var = tk.IntVar()
-        checkbox = tk.Checkbutton(coord_frame, text="Select all", variable=checkbox_var)
-        checkbox.pack(anchor='w')        
-
+        
+        button_frame = tk.Frame(plot_frame)
+        button_frame.pack(side=tk.RIGHT, fill=tk.Y, padx=5)   
         # Report button
-        report_button = tk.Button(coord_frame, text="Report", command=lambda: popup.show_report_window(RAs, Decs))
+        report_button = tk.Button(button_frame, text="Report", command=lambda: generate_report(check_vars))
         report_button.pack(pady=10)
         
+        def generate_report(check_vars):
+            selected_RAs = []
+            selected_Decs = []
+            for i, check_var in enumerate(check_vars):
+                if check_var.get() == 1:
+                    # Get the RA and Dec for the selected asteroid
+                    x = filtered_d_sources['xcentroid'][i]
+                    y = filtered_d_sources['ycentroid'][i]
+                    coord = wcs.pixel_to_world(x, y)
+                    ra = ut.ra_hms(coord.ra.deg)
+                    dec = ut.dec_dms(coord.dec.deg)
+                    selected_RAs.append(ra)
+                    selected_Decs.append(dec)
+            popup.show_report_window(selected_RAs, selected_Decs)
+        
     except Exception as e:
-        print(f"Error processing file: {e}")
-        messagebox.showerror("Error", f"An error occurred: {e}")
+        tb = traceback.format_exc()
+        print(f"Error processing file: {e}\n{tb}")
+        messagebox.showerror("Error", f"An error occurred: {e}\n\nDetails:\n{tb}")

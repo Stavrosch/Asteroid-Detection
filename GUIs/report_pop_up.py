@@ -16,15 +16,16 @@ def show_report_window(RAs, Decs):
     report_text = format_mpc_report(RAs, Decs)
     text_box = tk.Text(report_window, wrap='word', height=15, width=50)
     text_box.insert(tk.END, report_text)
+    text_box.config(state='disabled')
     text_box.pack(pady=10, padx=10)
+    
 
     # Copy to clipboard button
-    def copy_to_clipboard():
+    def copy_to_clipboard(text):
         report_window.clipboard_clear()
-        report_window.clipboard_append(report_text)
-        messagebox.showinfo("Copy", "MPC Report copied to clipboard!")
+        report_window.clipboard_append(text)
 
-    copy_button = tk.Button(report_window, text="Copy", command=copy_to_clipboard)
+    copy_button = tk.Button(report_window, text="Copy_RA", command=lambda: copy_to_clipboard(RAs))
     copy_button.pack(pady=5)
-
-# Add any additional logic needed for popup
+    copy_button1 = tk.Button(report_window, text="Copy_Dec", command=lambda: copy_to_clipboard(Decs))
+    copy_button1.pack(pady=5)

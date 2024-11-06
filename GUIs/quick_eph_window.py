@@ -4,6 +4,9 @@ from astroquery.mpc import MPC
 from astropy.coordinates import EarthLocation
 from datetime import datetime
 import astropy.units as u
+import subprocess
+import Utilities as ut 
+
 
 def create_window(root):
     ephemeris_window = tk.Toplevel(root)
@@ -21,6 +24,12 @@ def create_window(root):
     location_var.set("CYPRUS")
     location_combobox = ttk.Combobox(ephemeris_window, textvariable=location_var, values=["CYPRUS", "NOESIS", "HOLOMONTAS", "Custom"])
     location_combobox.grid(row=1, column=1, padx=10, pady=5)
+    
+    tk.Label(ephemeris_window, text="Select Mount:").grid(row=2, column=0, padx=10, pady=5)
+    mount_var = tk.StringVar()
+    mount_var.set("PlaneWave4")
+    mount_combobox = ttk.Combobox(ephemeris_window, textvariable=mount_var, values=["PlaneWave4", "10Micron"])
+    mount_combobox.grid(row=2, column=1, padx=10, pady=5)
 
     def on_location_change(event):
         if location_var.get() == "Custom":
@@ -32,25 +41,25 @@ def create_window(root):
 
     # Labels to display selected lat, lon, height
     lat_label = tk.Label(ephemeris_window, text="Latitude: 34.932056")
-    lat_label.grid(row=2, column=0, padx=10, pady=5)
+    lat_label.grid(row=3, column=0, padx=10, pady=5)
 
     lon_label = tk.Label(ephemeris_window, text="Longitude: 32.840167")
-    lon_label.grid(row=2, column=1, padx=10, pady=5)
+    lon_label.grid(row=3, column=1, padx=10, pady=5)
 
     height_label = tk.Label(ephemeris_window, text="Height: 1411 m")
-    height_label.grid(row=3, column=0, columnspan=2, padx=10, pady=5)
+    height_label.grid(row=4, column=0, columnspan=2, padx=10, pady=5)
 
     # Time Selection and 'Now' Button
-    tk.Label(ephemeris_window, text="Time (YYYY-MM-DDTHH:MM:SS):").grid(row=4, column=0, padx=10, pady=5)
+    tk.Label(ephemeris_window, text="Time (YYYY-MM-DDTHH:MM:SS):").grid(row=5, column=0, padx=10, pady=5)
     time_entry = tk.Entry(ephemeris_window)
-    time_entry.grid(row=4, column=1, padx=10, pady=5)
+    time_entry.grid(row=5, column=1, padx=10, pady=5)
     time_entry.insert(0, datetime.now().isoformat())  # Default to current time
 
     def set_time_now():
         time_entry.delete(0, tk.END)
         time_entry.insert(0, datetime.now().isoformat())
 
-    tk.Button(ephemeris_window, text="Set to Now", command=set_time_now).grid(row=5, column=1, padx=10, pady=5)
+    tk.Button(ephemeris_window, text="Set to Now", command=set_time_now).grid(row=7, column=1, padx=10, pady=5)
 
     def get_ephemeris():
         asteroid_designation = designation_entry.get()
@@ -78,10 +87,10 @@ def create_window(root):
         result_label.config(text=str(eph['Date', 'RA', 'Dec']))
 
     get_ephem_button = tk.Button(ephemeris_window, text="Get Ephemeris", command=get_ephemeris)
-    get_ephem_button.grid(row=6, column=0, columnspan=2, pady=10)
+    get_ephem_button.grid(row=8, column=0, columnspan=2, pady=10)
 
     result_label = tk.Label(ephemeris_window, text="Ephemeris will appear here", wraplength=400)
-    result_label.grid(row=7, column=0, columnspan=2, padx=10, pady=10)
+    result_label.grid(row=9, column=0, columnspan=2, padx=10, pady=10)
 
     def open_custom_location_window():
         custom_window = tk.Toplevel(ephemeris_window)
@@ -120,3 +129,30 @@ def create_window(root):
         lat_label.config(text=f"Latitude: {lat}")
         lon_label.config(text=f"Longitude: {lon}")
         height_label.config(text=f"Height: {height}")
+        
+    
+        # TLE Printer Button
+    def tle_printer():
+        asteroid_designation = designation_entry.get()
+        mount = mount_var.get()
+
+        tle = ut.TLE_printer(mount,asteroid_designation)
+        tle_label.config(text=f"TLE: {tle}", font=("Helvetica", 8))
+
+    tle_printer_button = tk.Button(ephemeris_window, text="TLE Printer", command=tle_printer)
+    tle_printer_button.grid(row=10, column=0, columnspan=2, pady=10)
+    tle_label = tk.Label(ephemeris_window, text="TLE will appear here", wraplength=400, font=("Helvetica", 8))
+    tle_label.grid(row=11, column=0, columnspan=2, padx=10, pady=10)
+
+    # Copy to Clipboard Button
+    def copy_to_clipboard():
+        tle_text = tle_label.cget("text")
+        if tle_text and tle_text != "TLE will appear here":
+            ephemeris_window.clipboard_clear()
+            tle_text1 = tle_text[len("TLE: Line found:"):]
+            ephemeris_window.clipboard_append(tle_text1)
+            ephemeris_window.update()
+            
+
+    copy_button = tk.Button(ephemeris_window, text="Copy", command=copy_to_clipboard)
+    copy_button.grid(row=12, column=1, padx=10, pady=5)
