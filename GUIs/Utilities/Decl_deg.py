@@ -10,5 +10,5 @@ def Decl_deg(dec):
     return deg
 
 if __name__== "__main__" :
-    dec='+15 45 23.0'
+    dec='-20 34 23.0'
     print(Decl_deg(dec))

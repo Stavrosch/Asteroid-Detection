@@ -4,8 +4,7 @@ from astropy.coordinates import SkyCoord
 import astropy.units as u
 from astroquery.gaia import Gaia
 
-def Query_FOV_stars3(wsc,RA,DEC,width,height):
-    wsc=wsc
+def Query_FOV_stars3(wcs,RA,DEC,width,height):
     Gaia.MAIN_GAIA_TABLE = "gaiaedr3.gaia_source"
     Gaia.ROW_LIMIT = 1000  # Adjust row limit as needed
     
@@ -16,10 +15,10 @@ def Query_FOV_stars3(wsc,RA,DEC,width,height):
     corners = np.array([[-dx, -dy], [dx, -dy], [dx, dy], [-dx, dy]])
 
     # Apply the CD matrix (rotation and scale)
-    rotated_corners = np.dot(corners, wsc.wcs.cd)
+    rotated_corners = np.dot(corners, wcs.wcs.cd)
 
     # Convert back to world coordinates (RA/DEC)
-    world_coords = wsc.wcs_pix2world(rotated_corners, 1)
+    world_coords = wcs.wcs_pix2world(rotated_corners, 1)
     rotated_ra_dec = SkyCoord(world_coords[:, 0], world_coords[:, 1], unit='deg')
 
     # Construct the polygon query

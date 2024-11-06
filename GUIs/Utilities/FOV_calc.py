@@ -1,31 +1,53 @@
 import math
+import matplotlib.pyplot as plt
 from astropy.io import fits
+from matplotlib.colors import LogNorm
+import matplotlib.patches as patches
 
 
-def FOV_calc(NAXIS1,NAXIS2,XPIXSZ,YPIXSZ,focal_length):
-
+def FOV_calc(NAXIS1, NAXIS2, XPIXSZ, YPIXSZ, focal_length):
     # Sensor dimensions in mm
-    sensor_width_mm = NAXIS1 * XPIXSZ
-    sensor_height_mm = NAXIS2 * YPIXSZ
-    
+    sensor_width_mm = NAXIS2 * XPIXSZ
+    sensor_height_mm = NAXIS1 * YPIXSZ
+
     # Field of View trigonometry
     fov_width_deg = 2 * math.degrees(math.atan(sensor_width_mm / (2 * focal_length)))
     fov_height_deg = 2 * math.degrees(math.atan(sensor_height_mm / (2 * focal_length)))
     return fov_width_deg, fov_height_deg
 
-if __name__== "__main__" :
-    Img = r'C:\Users\stavr\OneDrive\Desktop\Asteroid Data\301_mpc\301_mpc_1.1\01_22_43\301_mpc_1.1_00001.fits'
+
+if __name__ == "__main__":
+    # Load FITS file
+    Img = r'C:\Users\stavr\OneDrive\Desktop\Asteroid Data\AUTH-3\301_mpc\301_mpc_1.1\01_22_43\301_mpc_1.1_00001.fits'
     file = fits.open(Img)
     image = file[0]
+    data = image.data
     header = image.header
-    NAXIS1 = image.header['NAXIS1']
-    NAXIS2 = image.header['NAXIS2']
-    NAXIS1 = 1600
-    NAXIS2 = 1200
-    XPIXSZ = 3.8 * 10**-3  # in mm
-    YPIXSZ = 3.8 * 10**-3  # in mm
-    pixel_size= 5.86 # in μm
+
+    # Set parameters
+    NAXIS1 = header['NAXIS1']
+    NAXIS2 = header['NAXIS2']
+    XPIXSZ = 3.8 * 10 ** -3  # in mm
+    YPIXSZ = 3.8 * 10 ** -3  # in mm
     focal_length = 620  # Rasa 11 Cyprus in mm
-    aspp =  (pixel_size/focal_length)*206.265
-    #print('Image Scale',aspp)
-    print(FOV_calc(NAXIS1,NAXIS2,XPIXSZ,YPIXSZ,focal_length))
+
+    # Calculate Field of View
+    fov_width_deg, fov_height_deg = FOV_calc(NAXIS1, NAXIS2, XPIXSZ, YPIXSZ, focal_length)
+    print(f"FOV Width: {fov_width_deg:.2f} degrees, FOV Height: {fov_height_deg:.2f} degrees")
+
+
+    # Plot the image data for visual check
+    plt.figure(figsize=(10, 10))
+    norm = LogNorm()  # Log normalization for better visibility
+    plt.imshow(data, cmap='Greys', origin='lower', norm=norm, interpolation='nearest')
+    plt.colorbar(label='Pixel Value')
+    plt.title('FITS Image Data with Log Normalization')
+    plt.xlabel('X Pixels')
+    plt.ylabel('Y Pixels')
+    
+    # Add Field of View rectangle using FOV in degrees
+    fov_rect = patches.Rectangle((0, 0), fov_width_deg, fov_height_deg, linewidth=2, edgecolor='red', facecolor='none')
+    plt.gca().add_patch(fov_rect)
+    plt.text(10, 10, f'FOV: {fov_width_deg:.2f} x {fov_height_deg:.2f} deg', color='red', fontsize=12, bbox=dict(facecolor='white', alpha=0.8))
+
+    plt.show()
