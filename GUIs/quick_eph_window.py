@@ -16,7 +16,7 @@ def create_window(root):
     tk.Label(ephemeris_window, text="Asteroid Designation:").grid(row=0, column=0, padx=10, pady=5)
     designation_entry = tk.Entry(ephemeris_window)
     designation_entry.grid(row=0, column=1, padx=10, pady=5)
-    designation_entry.insert(0, "001")  # Default asteroid designation
+    designation_entry.insert(0, "1")  # Default asteroid designation
 
     # Location Selection
     tk.Label(ephemeris_window, text="Select Location:").grid(row=1, column=0, padx=10, pady=5)
@@ -39,7 +39,6 @@ def create_window(root):
 
     location_combobox.bind("<<ComboboxSelected>>", on_location_change)
 
-    # Labels to display selected lat, lon, height
     lat_label = tk.Label(ephemeris_window, text="Latitude: 34.932056")
     lat_label.grid(row=3, column=0, padx=10, pady=5)
 
@@ -49,7 +48,6 @@ def create_window(root):
     height_label = tk.Label(ephemeris_window, text="Height: 1411 m")
     height_label.grid(row=4, column=0, columnspan=2, padx=10, pady=5)
 
-    # Time Selection and 'Now' Button
     tk.Label(ephemeris_window, text="Time (YYYY-MM-DDTHH:MM:SS):").grid(row=5, column=0, padx=10, pady=5)
     time_entry = tk.Entry(ephemeris_window)
     time_entry.grid(row=5, column=1, padx=10, pady=5)
