@@ -3,15 +3,18 @@ from tkinter import ttk, filedialog, messagebox
 from astropy.io import fits
 from astroquery.astrometry_net import AstrometryNet
 import os
-from Utilities import FOV_calc, residual_calc
+from Utilities import FOV_calc, residual_calc, ps_local ,solve_plate
 import requests
+import subprocess
+
 
 ###### TO DO ######
 # 1. Add a progress bar
-# 2. Add if already solved, skip
+# 2. Add if already solved, -> except if the checkbox is ticked
 # 3. Add a button to open the solved image
 # 4. Lock the button
 # 5. Fix alignments
+# 6. Add comm boxes that shows you which info will be used for plate solving.
 
 def choose_file(file_label, solve_button,result_label,progress_bar):
     global file_paths
@@ -31,103 +34,128 @@ def choose_file(file_label, solve_button,result_label,progress_bar):
         messagebox.showwarning("No Files Selected", "Please select valid FITS files.")
         file_label.config(text="No files selected", fg="red")
         solve_button.config(state=tk.DISABLED)
+        
+        
+# def convert_path_to_wsl(windows_path):
+#     """Convert C:\path\to\file to /mnt/c/path/to/file"""
+#     path = windows_path.replace('\\', '/')
+#     if path[1] == ':':
+#         return f"/mnt/{path[0].lower()}{path[2:]}"
+#     return path
 
-def solve_plate(root, file_label, result_label, result_fail_label, progress_bar,var):
-    if not file_paths:
-        result_label.config(text="No files selected.")
-        return
+# def has_wcs(file_path):
+#     try:
+#         with fits.open(file_path) as hdul:
+#             header = hdul[0].header
 
-    result_label.config(text="Starting plate solving...")
-    root.update_idletasks()
+#             return 'CTYPE1' in header and 'CTYPE2' in header
+#     except Exception as e:
+#         print(f"Error checking WCS in {file_path}: {e}")
+#         return False
 
-    progress_bar['maximum'] = len(file_paths)
-    progress_bar['value'] = 0
-    ASTROMETRY_API_KEY = "" #PUT YOUR API KEY
-    ast = AstrometryNet()
-    ast.api_key = ASTROMETRY_API_KEY
-    for i, file_path in enumerate(file_paths):
-        try:
-            with fits.open(file_path) as file:
-                hdu = file[0]
-                header = hdu.header
-                wcs = hdu.header
-                print('\n',file_path)
-                file.close()
 
-                # # Check if the file already has a WCS header
-                # if 'WCSAXES' in header:
-                #     result_label.config(text=f"Skipping {i+1}/{len(file_paths)}: Already solved.")
-                #     root.update_idletasks()
-                #     progress_bar['value'] += 1
+# def solve_plate_API(root, file_label, result_label, result_fail_label, progress_bar,var):
+#     if not file_paths:
+#         result_label.config(text="No files selected.")
+#         return
 
-                #     continue
+#     result_label.config(text="Starting plate solving...")
+#     root.update_idletasks()
 
-                RA = header.get('RA', '0')
-                DEC = header.get('DEC', '0')
+#     progress_bar['maximum'] = len(file_paths)
+#     progress_bar['value'] = 0
+#     ASTROMETRY_API_KEY = 'rdukoneutpiciaaa'
+#     ast = AstrometryNet()
+#     ast.api_key = ASTROMETRY_API_KEY
+#     for i, file_path in enumerate(file_paths):
+#         try:
+#             with fits.open(file_path) as file:
+#                 hdu = file[0]
+#                 header = hdu.header
+#                 wcs = hdu.header
+#                 print('\n',file_path)
+#                 file.close()
 
-                RA = float(RA)
-                DEC = float(DEC)
+#                 # # Check if the file already has a WCS header
+#                 # if 'WCSAXES' in header:
+#                 #     result_label.config(text=f"Skipping {i+1}/{len(file_paths)}: Already solved.")
+#                 #     root.update_idletasks()
+#                 #     progress_bar['value'] += 1
 
-                solve_kwargs = {
-                    'center_ra': RA,
-                    'center_dec': DEC,
-                    'radius': 5,  # degrees
-                }
+#                 #     continue
 
-                result_label.config(text=f"Submitting {i+1}/{len(file_paths)} to Astrometry.net...")
-                root.update_idletasks()
+#                 RA = header.get('RA', '0')
+#                 DEC = header.get('DEC', '0')
 
-                wcs_header,subid = ast.solve_from_image(file_path,
-                     force_image_upload=True,
-                     publicly_visible='n',
-                     solve_timeout=300,
-                     return_submission_id=True,
-                     **solve_kwargs
-                )
+#                 RA = float(RA)
+#                 DEC = float(DEC)
+
+#                 solve_kwargs = {
+#                     'center_ra': RA,
+#                     'center_dec': DEC,
+#                     'radius': 5,  # degrees
+#                 }
+
+#                 result_label.config(text=f"Submitting {i+1}/{len(file_paths)} to Astrometry.net...")
+#                 root.update_idletasks()
+
+#                 wcs_header,subid = ast.solve_from_image(file_path,
+#                      force_image_upload=True,
+#                      publicly_visible='n',
+#                      solve_timeout=300,
+#                      return_submission_id=True,
+#                      **solve_kwargs
+#                 )
 
                 
-                if wcs_header is not None:
-                    result_label.config(text=f"Plate solving successful for image {i+1}/{len(file_paths)}!")
-                    root.update_idletasks()
-                    check = var.get()
-                    #print(wcs_header)
-                    if check==0:
-                        with fits.open(file_path, mode='update') as hdul:
-                                current_header = hdul[0].header
-                                 # Safely remove all HISTORY/COMMENT entries (even if none exist)
-                                current_header.remove("HISTORY", ignore_missing=True, remove_all=True)
-                                current_header.remove("COMMENT", ignore_missing=True, remove_all=True)
+#                 if wcs_header is not None:
+#                     result_label.config(text=f"Plate solving successful for image {i+1}/{len(file_paths)}!")
+#                     root.update_idletasks()
+#                     check = var.get()
+#                     #print(wcs_header)
+#                     if check==0:
+#                         with fits.open(file_path, mode='update') as hdul:
+#                                 current_header = hdul[0].header
+#                                  # Safely remove all HISTORY/COMMENT entries (even if none exist)
+#                                 current_header.remove("HISTORY", ignore_missing=True, remove_all=True)
+#                                 current_header.remove("COMMENT", ignore_missing=True, remove_all=True)
 
-                                current_header.update(wcs_header)
-                                hdul.flush()
-                                file.close()
-                        with fits.open(file_path, mode='update') as hdul:
+#                                 current_header.update(wcs_header)
+#                                 hdul.flush()
+#                                 file.close()
+#                         with fits.open(file_path, mode='update') as hdul:
                             
-                            header = hdul[0].header                           
-                            print(subid)
-                            status_url = f"http://nova.astrometry.net/api/submissions/{subid}"
-                            response = requests.get(status_url)
-                            data = response.json()
-                            jobid = data.get("jobs", [])
-                            print(jobid[0])
-                            residuals = residual_calc(hdu,jobid[0])
-                            #print(residuals)
-                            header['COMMENT'] = f"Residuals: {residuals} calculated by ADA."
-                            hdul.flush()
+#                             header = hdul[0].header                           
+#                             print(subid)
+#                             status_url = f"http://nova.astrometry.net/api/submissions/{subid}"
+#                             response = requests.get(status_url)
+#                             data = response.json()
+#                             jobid = data.get("jobs", [])
+#                             print(jobid[0])
+#                             residuals = residual_calc(hdu,jobid[0])
+#                             #print(residuals)
+#                             header['COMMENT'] = f"Residuals: {residuals} calculated by ADA."
+#                             hdul.flush()
 
 
-                    result_label.config(text=f"Plate solving complete for image {i+1}/{len(file_paths)}.")
-                    root.update_idletasks()
+#                     result_label.config(text=f"Plate solving complete for image {i+1}/{len(file_paths)}.")
+#                     root.update_idletasks()
 
-        except Exception as e:
-            result_fail_label.config(text=f"{i+1}/{len(file_paths)}: failed to solve.")
-            print(e)
-            root.update_idletasks()
+#         except Exception as e:
+#             result_fail_label.config(text=f"{i+1}/{len(file_paths)}: failed to solve.")
+#             print(e)
+#             root.update_idletasks()
 
-        progress_bar['value'] += 1
-        root.update_idletasks()
+#         progress_bar['value'] += 1
+#         root.update_idletasks()
 
-    result_label.config(text="Plate solving process completed for all files.")
+#     result_label.config(text="Plate solving process completed for all files.")
+
+def choose_solver(root, file_label, result_label, result_fail_label, progress_bar,file_paths,var,var1):
+    if var1.get() == 1:
+        ps_local(root, file_label, result_label, result_fail_label, progress_bar,var,file_paths)
+    else:
+        solve_plate(root, file_label, result_label, result_fail_label, progress_bar,var, file_paths)
 
 def create_window(root):
     plate_solver_window = tk.Toplevel(root)
@@ -142,7 +170,7 @@ def create_window(root):
     select_button.grid(row=0, column=2, padx=10, pady=5)
 
     # Solve button
-    solve_button = tk.Button(plate_solver_window, text="Solve Plates", state=tk.DISABLED, command=lambda: solve_plate(root, file_label, result_label, result_fail_label, progress_bar,var))
+    solve_button = tk.Button(plate_solver_window, text="Solve Plates", state=tk.DISABLED, command=lambda: choose_solver(root, file_label, result_label, result_fail_label, progress_bar,file_paths,var,var1))
     solve_button.grid(row=1, column=0, columnspan=3, pady=10)
 
     # Progress bar
@@ -154,9 +182,15 @@ def create_window(root):
     result_label.grid(row=3, column=0, columnspan=3, padx=10, pady=10)
     result_fail_label = tk.Label(plate_solver_window, text="", wraplength=400)
     result_fail_label.grid(row=4, column=0, columnspan=3, padx=10, pady=10)
-    var = tk.IntVar()
-    header_update = tk.Checkbutton(plate_solver_window, text=f'Dont Update Header?',variable=var, onvalue=1, offvalue=0)# command=print_selection)
+    var = tk.IntVar()  # Variable to check if the header Var is 0 means Update the header, 1 means do not update the header so with it clicked you dont update.
+    header_update = tk.Checkbutton(plate_solver_window, text=f'Overwrite?',variable=var, onvalue=1, offvalue=0)# command=print_selection)
     header_update.grid(row=4, column=3, columnspan=3, padx=10, pady=10)
+    
+    var1 =tk.IntVar()
+    solver_choice = tk.Checkbutton(plate_solver_window, text=f'Local?',variable=var1, onvalue=1, offvalue=0)# command=print_selection)
+    solver_choice.grid(row=1, column=3, columnspan=3, padx=10, pady=10)
+    
+    
 if __name__ == "__main__":
     root = tk.Tk()
     root.title("Main Application")
