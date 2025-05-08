@@ -2,13 +2,12 @@ import os
 
 def find_number_in_file(file_name, number_to_find):
     try:
-        # Get the directory of the current script and save file in the current script.
         script_dir = os.path.dirname(os.path.realpath(__file__))
         file_path = os.path.join(script_dir, file_name)
 
         with open(file_path, 'r') as file:
             for line in file:
-                columns = line.split() # Adding a collumn split.
+                columns = line.split() 
                 if columns and columns[0] == str(number_to_find):
                     return line
         return None
