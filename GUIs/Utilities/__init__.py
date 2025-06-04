@@ -6,7 +6,13 @@ from .Query_FOV_stars2 import Query_FOV_stars2
 from .Query_FOV_stars3 import Query_FOV_stars3
 from .deg_dms import dec_dms
 from .ra_hms import ra_hms
-from .twirl_platesolver import plate_solve
+#from .twirl_platesolver import plate_solve
 from .blob_detection import blob_detection 
 from .image_center import image_center
-from .TLE_printer import TLE_printer
+from .ORB_EL_printer import ORB_EL_printer
+from .horizons_mag import get_apparent_mag
+from .residual_calc import residual_calc
+from .ps_local import ps_local
+from .ps_API import solve_plate
+from .whatsobservablegui import get_observable_objects
+from .get_observable2 import get_observable_objects

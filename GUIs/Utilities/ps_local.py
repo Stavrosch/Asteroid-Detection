@@ -3,7 +3,17 @@ from tkinter import ttk, filedialog, messagebox
 import os
 import subprocess
 from astropy.io import fits
+from Utilities import residual_calc_local
 
+
+
+def get_residual(file_path):
+    corr_file = file_path.replace('.fits', '.corr')
+    if os.path.exists(corr_file):
+        residual = residual_calc_local.residual_calc_local(corr_file)
+        if residual is not None:
+            print(f"Residual RMS (arcsec): {residual:.4f}")
+            return residual        
 
 def ps_local(root, file_label, result_label, result_fail_label, progress_bar,var,file_paths):
     if not file_paths:
@@ -32,28 +42,33 @@ def ps_local(root, file_label, result_label, result_fail_label, progress_bar,var
                 'wsl',
                 'solve-field',
                 '--overwrite',
-                '--new-fits', 'none',
-                '--corr', 'none',
-                '--match', 'none',
-                '--rdls', 'none',
-                '--solved', 'none',
+                 '--new-fits', 'none',
+
+                 '--solved', 'none',
                 convert_path_to_wsl(file_path)
             ]
-
+                            # '--corr', 'none',
+                 #'--match', 'none',
+            #'--rdls', 'none',
+            print(f"Running command: {' '.join(cmd)}")
             subprocess.run(cmd, check=True)
             wcs_file = file_path.replace('.fits', '.wcs')
-
+            rdls_file = file_path.replace('.fits', '.rdls')
             if os.path.exists(wcs_file):
                 with fits.open(wcs_file) as wcs_hdul:
                     wcs_header = wcs_hdul[0].header
 
                 with fits.open(file_path, mode='update') as hdul:
                     current_header = hdul[0].header
-                    # Safely remove all HISTORY/COMMENT entries (even if none exist)
+
                     current_header.remove("HISTORY", ignore_missing=True, remove_all=True)
                     current_header.remove("COMMENT", ignore_missing=True, remove_all=True)
                     current_header.update(wcs_header)
+                    residual = get_residual(file_path)
+                    current_header['COMMENT'] = f"Residuals: {residual} calculated by ADA."
+
                     hdul.flush()
+
 
                 os.remove(wcs_file)
                 result_label.config(text=f"Solved and updated {i+1}/{len(file_paths)}.")
