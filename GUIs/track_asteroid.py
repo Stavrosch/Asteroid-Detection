@@ -1,83 +1,87 @@
 import tkinter as tk
 from tkinter import ttk
-from astroquery.mpc import MPC
-from astropy.coordinates import EarthLocation, Angle
-from astropy.time import Time
-import astropy.units as u
 from pwi4_client import PWI4
+from datetime import datetime
+import time
 
-def create_window(parent):
-    win = tk.Toplevel(parent)
-    win.title("Asteroid Tracking")
-    win.geometry("400x400")
+class TelescopeControl:
+    def __init__(self, pwi_client):
+        self.pwi = pwi_client
 
-    tk.Label(win, text="Asteroid Designation:").pack()
-    designation_entry = tk.Entry(win)
-    designation_entry.pack()
-    designation_entry.insert(0, "433")  # default Eros
+    def connect_mount(self):
+        status = self.pwi.mount_connect()
+        return status.mount.is_connected
 
-    tk.Label(win, text="Start Time (UTC):").pack()
-    start_entry = tk.Entry(win)
-    start_entry.pack()
-    start_entry.insert(0, Time.now().isot)
+    def slew_to_ra_dec(self, ra_hours, dec_degs):
+        self.pwi.mount_goto_ra_dec_j2000(ra_hours, dec_degs)
 
-    tk.Label(win, text="Number of Points:").pack()
-    npts_entry = tk.Entry(win)
-    npts_entry.pack()
-    npts_entry.insert(0, "10")
+    def get_status(self):
+        return self.pwi.status()
 
-    tk.Label(win, text="Interval (minutes):").pack()
-    interval_entry = tk.Entry(win)
-    interval_entry.pack()
-    interval_entry.insert(0, "1")
+def create_enhanced_gui(root):
+    pwi_client = PWI4()
+    telescope = TelescopeControl(pwi_client)
 
-    tk.Label(win, text="Lat/Lon/Height:").pack()
-    lat_entry = tk.Entry(win); lat_entry.pack(); lat_entry.insert(0, "34.93")
-    lon_entry = tk.Entry(win); lon_entry.pack(); lon_entry.insert(0, "32.84")
-    h_entry = tk.Entry(win); h_entry.pack(); h_entry.insert(0, "1411")
+    window = tk.Toplevel(root)
+    window.title("Enhanced Asteroid Control")
+    window.geometry("600x500")
 
-    result_label = tk.Label(win, text="")
-    result_label.pack()
+    notebook = ttk.Notebook(window)
+    notebook.pack(expand=True, fill='both')
 
-    def upload_path():
-        designation = designation_entry.get()
-        start_time = start_entry.get()
-        num_points = int(npts_entry.get())
-        interval_min = int(interval_entry.get())
-        location = EarthLocation(
-            lat=float(lat_entry.get())*u.deg,
-            lon=float(lon_entry.get())*u.deg,
-            height=float(h_entry.get())*u.m,
-        )
+    status_tab = ttk.Frame(notebook)
+    control_tab = ttk.Frame(notebook)
 
-        eph = MPC.get_ephemeris(
-            designation,
-            location=location,
-            start=start_time,
-            number=num_points,
-            step=f"{interval_min}m"
-        )
+    notebook.add(status_tab, text="Real-time Status")
+    notebook.add(control_tab, text="Direct Telescope Control")
 
-        points = []
-        for row in eph:
-            jd = Time(row['Date']).jd
-            ra = Angle(row['RA'], unit=u.hourangle).hour
-            dec = Angle(row['Dec'], unit=u.deg).degree
-            points.append((jd, ra, dec))
+    # Status Tab Widgets
+    status_label = tk.Label(status_tab, text="Mount Status:", font=("Arial", 12))
+    status_label.pack(pady=10)
 
-        pwi4 = PWI4()
-        if not pwi4.status().mount.is_connected:
-            pwi4.mount_connect()
-        pwi4.mount_radecpath_new()
-        for jd, ra, dec in points:
-            pwi4.mount_radecpath_add_point(jd, ra, dec)
-        pwi4.mount_radecpath_apply()
-        result_label.config(text="Asteroid tracking path uploaded!")
+    status_text = tk.Text(status_tab, width=70, height=20, state='disabled')
+    status_text.pack()
 
-    tk.Button(win, text="Upload Tracking Path", command=upload_path).pack(pady=10)
+    def update_status():
+        status = telescope.get_status()
+        status_text.config(state='normal')
+        status_text.delete(1.0, tk.END)
+        status_text.insert(tk.END, f"RA: {status.mount.ra_j2000_hours:.4f} hours\n")
+        status_text.insert(tk.END, f"Dec: {status.mount.dec_j2000_degs:.4f} deg\n")
+        status_text.insert(tk.END, f"Alt: {status.mount.altitude_degs:.2f} deg\n")
+        status_text.insert(tk.END, f"Az: {status.mount.azimuth_degs:.2f} deg\n")
+        status_text.insert(tk.END, f"Slewing: {'Yes' if status.mount.is_slewing else 'No'}\n")
+        status_text.config(state='disabled')
+        window.after(2000, update_status)
 
-# Test window alone:
+    update_status()
+
+    # Control Tab Widgets
+    tk.Label(control_tab, text="RA (hours):").pack(pady=5)
+    ra_entry = tk.Entry(control_tab)
+    ra_entry.pack(pady=5)
+
+    tk.Label(control_tab, text="Dec (degrees):").pack(pady=5)
+    dec_entry = tk.Entry(control_tab)
+    dec_entry.pack(pady=5)
+
+    def connect_and_slew():
+        connected = telescope.connect_mount()
+        if connected:
+            ra = float(ra_entry.get())
+            dec = float(dec_entry.get())
+            telescope.slew_to_ra_dec(ra, dec)
+            result_label.config(text="Slew command sent!")
+        else:
+            result_label.config(text="Failed to connect mount!")
+
+    tk.Button(control_tab, text="Connect & Slew", command=connect_and_slew).pack(pady=10)
+    result_label = tk.Label(control_tab, text="")
+    result_label.pack(pady=5)
+
 if __name__ == "__main__":
     root = tk.Tk()
-    create_window(root)
+    root.title("Main Application")
+    root.geometry("300x100")
+    tk.Button(root, text="Open Enhanced Asteroid GUI", command=lambda: create_enhanced_gui(root)).pack(padx=20, pady=20)
     root.mainloop()

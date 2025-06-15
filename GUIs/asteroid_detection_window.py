@@ -2,7 +2,6 @@ import tkinter as tk
 from tkinter import filedialog, messagebox
 from astropy.io import fits
 import matplotlib.pyplot as plt
-from matplotlib.patches import Rectangle
 import Utilities as ut 
 from astropy.coordinates import SkyCoord
 from astropy.wcs import WCS
@@ -11,7 +10,6 @@ from astropy.visualization import SqrtStretch
 from astropy.visualization.mpl_normalize import ImageNormalize
 from photutils.aperture import CircularAperture
 from astropy.table import QTable
-from matplotlib.lines import Line2D
 import os
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 from matplotlib.figure import Figure
