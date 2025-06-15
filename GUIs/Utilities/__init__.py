@@ -16,3 +16,5 @@ from .ps_local import ps_local
 from .ps_API import solve_plate
 from .whatsobservablegui import get_observable_objects
 from .get_observable2 import get_observable_objects
+from .ORB_EL_printer import find_number_in_file
+from .split_segments import split_segments

@@ -4,10 +4,13 @@ from astroquery.gaia import Gaia
 from astropy.coordinates import SkyCoord
 from astropy import units as u
 from astropy.wcs import WCS
-
+from astropy.wcs.utils import proj_plane_pixel_scales
 def residual_calc(hdu,JOB_ID):
 
     wcs = WCS(hdu.header)
+    pixel_scales_deg = proj_plane_pixel_scales(wcs)
+    pixel_scales_arcsec = pixel_scales_deg * 3600 
+    mean_pixel_scale_arcsec = np.mean(pixel_scales_arcsec)
     #print(wcs)
     ANNOTATION_URL = f"http://nova.astrometry.net/api/jobs/{JOB_ID}/annotations/"
     print(ANNOTATION_URL)
@@ -69,10 +72,13 @@ def residual_calc(hdu,JOB_ID):
                 delta_x = x - x_gaia  
                 delta_y = y - y_gaia
                 residual = np.sqrt(delta_x**2 + delta_y**2)
-                residuals.append((name[0], residual))
+                residual_pix = np.sqrt(delta_x**2 + delta_y**2)
+                residual_arcsec = residual_pix * mean_pixel_scale_arcsec
+                residuals.append((name[0], residual_arcsec))
+
             
     for star, res in residuals:
-        print(f"Star {star}: Residual = {res:.5f} pixels")
+       print(f"Star {star}: Residual = {res:.5f} arcsec")
     
     if residuals :
         m_res = np.mean([r[1] for r in residuals])
