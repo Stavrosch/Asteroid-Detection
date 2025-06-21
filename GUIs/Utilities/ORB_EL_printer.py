@@ -9,6 +9,8 @@ def find_number_in_file(file_name, number_to_find):
             for line in file:
                 columns = line.split() 
                 if columns and columns[0] == str(number_to_find):
+                    print(f"Found {number_to_find} in file {file_name}: {line.strip()}")
+                    
                     return line
         return None
     except FileNotFoundError:

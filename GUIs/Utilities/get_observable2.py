@@ -43,7 +43,8 @@ class SelectableTreeView(ttk.Treeview):
         return [item for item in self.get_children() if 'checked' in self.item(item, 'tags')]
 
 
-def get_observable_objects(lat, lon, height, obs_time, angle=None, min_mag=None, max_mag=None, object_type=None,on_select_callback=None):
+def get_observable_objects(lat, lon, height, obs_time, angle=None, min_mag=None, max_mag=None, object_type=None,on_select_callback=None
+                           ,parent_frame=None,tree_widget=None):
     print("observation time:", obs_time)
     print(obs_time.split("T")[0])
 
@@ -83,7 +84,7 @@ def get_observable_objects(lat, lon, height, obs_time, angle=None, min_mag=None,
 
     headers = data["fields"]
     rows = data["data"]
-    fields_to_suppress = ["Designation","Object-Observer-Sun (deg)", "Topo.range (au)", "Galactic latitude (deg)", "Object-Observer-Moon (deg)", ""]
+    fields_to_suppress = ["R.A.","Dec.","Max. time observable","Designation","Object-Observer-Sun (deg)", "Topo.range (au)", "Galactic latitude (deg)", "Object-Observer-Moon (deg)", ""]
     suppress_indices = [headers.index(field) for field in fields_to_suppress if field in headers]
     filtered_headers = [header for i, header in enumerate(headers) if i not in suppress_indices]
     filtered_rows = [
@@ -91,29 +92,22 @@ def get_observable_objects(lat, lon, height, obs_time, angle=None, min_mag=None,
         for row in rows
     ]
 
-    result_win = tk.Toplevel()
-    result_win.title("Observable Objects")
 
-    tree = SelectableTreeView(result_win, columns=filtered_headers, show="tree headings", height=10)
-    tree.pack(expand=True, fill="both", padx=10, pady=10)
+    if tree_widget:
+            tree_widget.delete(*tree_widget.get_children())
+            tree_widget["columns"] = filtered_headers
+            for col in filtered_headers:
+                tree_widget.heading(col, text=col)
+                tree_widget.column(col, width=50, anchor="center")
 
-    # The Select column
-    tree.heading("#0", text="Select")
-    tree.column("#0", width=50, anchor="center")
+            for row in filtered_rows:
+                tree_widget.insert("", "end", text="", values=row)
 
-    for col in filtered_headers:
-        tree.heading(col, text=col)
-        tree.column(col, width=120, anchor="center")
-    for row in filtered_rows:
-        tree.insert("", "end", text="", values=row)
+            def add_selected_to_list_internal():
+                selected = tree_widget.get_checked_items()
+                selected_data = [tree_widget.item(item)["values"] for item in selected]
+                if on_select_callback:
+                    on_select_callback(selected_data, filtered_headers)
 
-
-    def add_selected_to_list():
-        selected = tree.get_checked_items()
-        selected_data = [tree.item(item)["values"] for item in selected]
-        if on_select_callback:
-            on_select_callback(selected_data,filtered_headers)  
-        #result_win.destroy()
-
-    btn = tk.Button(result_win, text="Add Object", command=add_selected_to_list)
-    btn.pack(pady=5)
+            btn_add = tk.Button(parent_frame, text="Add", command=add_selected_to_list_internal)
+            btn_add.place(x=650, y=350, width=50, height=30)

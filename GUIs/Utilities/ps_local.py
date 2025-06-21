@@ -4,7 +4,8 @@ import os
 import subprocess
 from astropy.io import fits
 from Utilities import residual_calc_local
-
+from astropy.coordinates import Angle
+import astropy.units as u
 
 
 def get_residual(file_path):
@@ -37,18 +38,39 @@ def ps_local(root, file_label, result_label, result_fail_label, progress_bar,var
 
             result_label.config(text=f"Solving {i+1}/{len(file_paths)}...")
             root.update_idletasks()
+            try:
+                with fits.open(file_path) as hdul:
+                    header = hdul[0].header
+                    ra = header.get('RA')
+                    dec = header.get('DEC')
+                    try:
+                        ra_deg = float(ra)
+                        dec_deg = float(dec)
+                    except ValueError:
+                        ra_deg = Angle(ra, unit=u.hourangle).degree
+                        dec_deg = Angle(dec, unit=u.deg).degree
+                        ra_deg = float(ra_deg)
+                        dec_deg = float(dec_deg)
+            except Exception as e:
+                print(f"Error reading header: {e}")
+
+            extra_args = []
+
+            if ra_deg is not None and dec_deg is not None:
+                extra_args += ['--ra', str(ra_deg), '--dec', str(dec_deg), '--radius', '2.0']
 
             cmd = [
                 'wsl',
                 'solve-field',
                 '--overwrite',
                  '--new-fits', 'none',
-
                  '--solved', 'none',
+                 #*extra_args,
                 convert_path_to_wsl(file_path)
             ]
-                            # '--corr', 'none',
-                 #'--match', 'none',
+            
+            # '--corr', 'none',
+            #'--match', 'none',
             #'--rdls', 'none',
             print(f"Running command: {' '.join(cmd)}")
             subprocess.run(cmd, check=True)

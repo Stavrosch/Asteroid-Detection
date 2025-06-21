@@ -5,6 +5,8 @@ from astroquery.astrometry_net import AstrometryNet
 import os
 from Utilities import FOV_calc, residual_calc
 import requests
+from astropy.coordinates import Angle
+import astropy.units as u
 
 def solve_plate(root, file_label, result_label, result_fail_label, progress_bar,var, file_paths):
     if not file_paths:
@@ -40,6 +42,16 @@ def solve_plate(root, file_label, result_label, result_fail_label, progress_bar,
                 DEC = header.get('DEC')
 
                 if RA is not None and DEC is not None:
+                    try:
+                        RA = float(RA) 
+                        DEC = float(DEC)
+                    except ValueError:
+                        try:
+                            RA = Angle(RA, unit=u.hourangle).degree
+                            DEC =  Angle(DEC, unit=u.deg).degree
+
+                        except Exception as e:
+                            print(f"Error converting RA/DEC: {e}")
                     RA = float(RA)
                     DEC = float(DEC)
                     solve_kwargs = {'center_ra': RA, 'center_dec': DEC, 'radius': 5}

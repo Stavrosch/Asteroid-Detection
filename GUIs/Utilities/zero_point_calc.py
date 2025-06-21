@@ -12,7 +12,6 @@ def zero_point_calc(x,y,image,flux):
     wcs = WCS(image.header)
     coord = wcs.pixel_to_world(x, y)
     
-    "Multiple Queries"
     try:
         with contextlib.redirect_stdout(io.StringIO()):
             gaia_data = Gaia.query_object_async(coord, radius=5 * u.arcsec)        #print(gaia_data)

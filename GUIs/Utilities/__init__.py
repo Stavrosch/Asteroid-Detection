@@ -18,3 +18,6 @@ from .whatsobservablegui import get_observable_objects
 from .get_observable2 import get_observable_objects
 from .ORB_EL_printer import find_number_in_file
 from .split_segments import split_segments
+from .get_observable2 import SelectableTreeView
+from. detector import detector
+from. plotaltaz import plot_asteroid_altaz_path

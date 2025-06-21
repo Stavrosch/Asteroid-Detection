@@ -7,6 +7,39 @@ from photutils.background import Background2D, MedianBackground
 from astropy.stats import SigmaClip
 
 def blob_detection(data,t, image,ZMAG,EXPTIME, aperture_radius=5):
+    """
+    Detects blobs (sources) in astronomical image data and estimates their magnitudes.
+    This function applies Laplacian of Gaussian (LoG) blob detection to the input image data,
+    filters out hot pixels, estimates local background, computes fluxes within a specified aperture,
+    and converts these fluxes to magnitudes using either a provided or calculated zero-point magnitude.
+    Parameters
+    ----------
+    data : numpy.ndarray
+        2D array representing the image data.
+    t : float
+        Threshold for blob detection.
+    image : numpy.ndarray
+        The original image data used for zero-point magnitude calculation.
+    ZMAG : float
+        Zero-point magnitude for photometric calibration. If 0, it will be estimated.
+    EXPTIME : float
+        Exposure time of the image, used for magnitude calculation.
+    aperture_radius : int, optional
+        Radius of the circular aperture (in pixels) used for flux measurement (default is 5).
+    Returns
+    -------
+    detected_sources : astropy.table.QTable
+        Table containing the detected sources with columns:
+            - 'xcentroid': x-coordinates of detected blobs.
+            - 'ycentroid': y-coordinates of detected blobs.
+            - 'radius': Estimated radius of each blob.
+            - 'magnitude': Estimated magnitude of each source.
+    Notes
+    -----
+    - Hot pixels are filtered based on their radius and neighbor pixel values.
+    - Local background is estimated using sigma-clipped median filtering.
+    - If ZMAG is set to 0, the zero-point magnitude is estimated from the first 20 sources.
+    """
     min_radius=1.5
     data_float = data.astype(float)
 

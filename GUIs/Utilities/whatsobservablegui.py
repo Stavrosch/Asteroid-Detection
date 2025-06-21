@@ -3,7 +3,7 @@ from tkinter import ttk, filedialog, messagebox
 import requests
 
 
-def get_observable_objects(lat, lon, height,obs_time, angle=None, min_mag=None, max_mag=None, object_type=None):
+def get_observable_objects(lat, lon, height,obs_time, angle=None, min_mag=None, max_mag=None, object_type=None, parent_frame=None):
         print(obs_time)
         
         params = {
@@ -49,13 +49,11 @@ def get_observable_objects(lat, lon, height,obs_time, angle=None, min_mag=None, 
             for row in rows
         ]
 
-        result_win = tk.Toplevel()
-        result_win.title("Observable Objects")
 
-        tree = ttk.Treeview(result_win, columns=filtered_headers, show="headings", height=10)
+        tree = ttk.Treeview(parent_frame, columns=filtered_headers, show="headings", height=10)
         for col in filtered_headers:
             tree.heading(col, text=col)
             tree.column(col, width=120, anchor="center")
         for row in filtered_rows:
             tree.insert("", "end", values=row)
-        tree.pack(expand=True, fill="both", padx=10, pady=10)
+        tree.place(x=220, y=10, width=800, height=300)

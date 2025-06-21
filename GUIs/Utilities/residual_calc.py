@@ -59,7 +59,7 @@ def residual_calc(hdu,JOB_ID):
 
                 gaia_ra, gaia_dec = results["ra"][0], results["dec"][0]
                 print(gaia_dec, gaia_ra)
-
+                print(f"Gaia coordinates for {name[0]}: RA = {gaia_ra}, DEC = {gaia_dec}")
                 gaia_coord = SkyCoord(ra=gaia_ra * u.deg, dec=gaia_dec * u.deg, frame="icrs")
                 print(gaia_coord)
                 x_gaia, y_gaia = wcs.wcs_world2pix(gaia_coord.ra.deg, gaia_coord.dec.deg, 0)               
