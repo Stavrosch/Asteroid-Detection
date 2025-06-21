@@ -4,6 +4,8 @@ from astropy.io import fits
 from astroquery.astrometry_net import AstrometryNet
 import os
 from Utilities import FOV_calc, residual_calc, ps_local ,solve_plate
+from astropy.coordinates import Angle
+import astropy.units as u
 import requests
 import subprocess
 
@@ -15,6 +17,7 @@ import subprocess
 # 4. Lock the button
 # 5. Fix alignments
 # 6. Add comm boxes that shows you which info will be used for plate solving.
+# 7. Fix local solver with arguments
 
 def choose_file(file_label, solve_button,result_label,progress_bar,ra_entry,dec_entry,scale_entry):
     global file_paths
@@ -29,7 +32,6 @@ def choose_file(file_label, solve_button,result_label,progress_bar,ra_entry,dec_
         
         
         try:
-            #Change Entry for RA and DEC
             with fits.open(file_path) as file:
                 hdu = file[0]
                 header = hdu.header
@@ -38,11 +40,22 @@ def choose_file(file_label, solve_button,result_label,progress_bar,ra_entry,dec_
             
                 RA = header.get('RA')
                 DEC = header.get('DEC')
+                print(f"RA: {RA}, DEC: {DEC}")
                 #pixscale = header.get('PIXSCALE') or header.get('PIXSIZE') or header.get('PIXSCL')
                 #print(RA, DEC, pixscale)
             if RA is not None or DEC is not None:
-                RA = float(RA) 
-                DEC = float(DEC)
+                try:
+                    RA = float(RA) 
+                    DEC = float(DEC)
+                except ValueError:
+                    try:
+                        RA = Angle(RA, unit=u.hourangle)
+                        DEC =  Angle(DEC, unit=u.deg).degree
+                        #print(f"Converted RA: {RA}, DEC: {DEC}")
+                    except Exception as e:
+                        #print(f"Error converting RA/DEC: {e}")
+                        RA = "RA not found"
+                        DEC = "Dec not found"
                 #print(RA, DEC, pixscale)
 
                 ra_entry.config(state='normal')
@@ -56,11 +69,11 @@ def choose_file(file_label, solve_button,result_label,progress_bar,ra_entry,dec_
             print(f"Error reading header: {e}")
             ra_entry.config(state='normal')
             ra_entry.delete(0, tk.END)
-            ra_entry.insert(0, "RA not found")
+            ra_entry.insert(0, "-")
             
             dec_entry.config(state='normal')
             dec_entry.delete(0, tk.END)
-            dec_entry.insert(0, "Dec not found")
+            dec_entry.insert(0, "-")
     
         file_label.config(text=f"Selected {file_nums} Files.", fg="green")
         solve_button.config(state=tk.NORMAL)
@@ -87,15 +100,8 @@ def create_window(root):
     plate_solver_window.title("Plate Solver")
     plate_solver_window.geometry("400x270")
 
-    # Static text
-    #tk.Label(plate_solver_window, text="Select FITS files:").place(x=10, y=10)
-
-    # Dynamic labels/buttons
     file_label = tk.Label(plate_solver_window, text="No files selected", fg="red")
     file_label.place(x=150, y=10)
-    
-    
-        # Solver choice checkbox
 
 
     select_button = tk.Button(
@@ -115,8 +121,8 @@ def create_window(root):
     )
     solver_choice.place(x=50, y=50)
     
-    ra_labeL = tk.Label(plate_solver_window, text="RA:")
-    ra_labeL.place(x=150, y=50)
+    ra_label = tk.Label(plate_solver_window, text="RA:")
+    ra_label.place(x=150, y=50)
     ra_entry = tk.Entry(plate_solver_window, width=10, state="disabled")
     ra_entry.place(x=180, y=50)
     
@@ -131,17 +137,9 @@ def create_window(root):
     scale_entry = tk.Entry(plate_solver_window, width=10, state="disabled")
     scale_entry.place(x=320, y=80)
     
-
-    # Overwrite checkbox
     var = tk.IntVar()
-    header_update = tk.Checkbutton(
-        plate_solver_window,
-        text="Overwrite?",
-        variable=var,
-        onvalue=1,
-        offvalue=0
-    )
-    header_update.place(x=50, y=80)   
+    header_update = tk.Checkbutton(plate_solver_window,text="Overwrite?",variable=var,onvalue=1,offvalue=0)
+    header_update.place(x=50, y=80)
 
     solve_button = tk.Button(
         plate_solver_window,
@@ -154,9 +152,6 @@ def create_window(root):
     )
     solve_button.place(x=150, y=180, width=100)
 
-
-
-    # Progress bar
     progress_bar = ttk.Progressbar(
         plate_solver_window,
         orient="horizontal",
@@ -165,19 +160,14 @@ def create_window(root):
     )
     progress_bar.place(x=50, y=140)
 
-    # Results
     result_label = tk.Label(
         plate_solver_window,
         text="Results will appear here",
         wraplength=380
     )
-    result_label.place(x=10, y=205)
+    result_label.place(x=10, y=215)
 
-    result_fail_label = tk.Label(
-        plate_solver_window,
-        text="",
-        wraplength=380
-    )
+    result_fail_label = tk.Label(plate_solver_window,text="",wraplength=380 )
     result_fail_label.place(x=10, y=240)
 
  

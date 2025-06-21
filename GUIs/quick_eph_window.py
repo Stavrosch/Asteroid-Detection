@@ -22,6 +22,8 @@ from skyfield.units import Angle
 from matplotlib.backends.backend_tkagg import NavigationToolbar2Tk
 from datetime import timedelta
 import tkinter.font as tkFont  # Add at the top
+from Utilities import SelectableTreeView
+from PIL import Image, ImageTk
 
 # TO DO 
 # LOAD TWILIGHT DATA
@@ -38,22 +40,43 @@ print(f"Ephemeris loaded in {end2 - end:.2f} seconds")
 sun, earth = eph['sun'], eph['earth']
 ts = load.timescale()
 
+def load_icon(path, size=(20, 20)):
+    img = Image.open(path).resize(size, Image.Resampling.LANCZOS)
+    return ImageTk.PhotoImage(img)
+
 
 def create_window(root):
+    """
+    Creates and displays the main ephemeris and asteroid tools window as a Toplevel Tkinter window.
+    This window provides two main tabs:
+      1. "Whats Observable?": Allows users to filter and view observable asteroids based on location, time, elevation, magnitude, and object type. Users can select asteroids from a list and manage a selection list.
+      2. "Track Asteroid": Enables users to enter an asteroid designation, select observation location and mount, and view ephemeris data including RA, Dec, magnitude, distance, and orbital elements. Also displays an altitude path plot and provides tracking information.
+    Key Features:
+      - Location and mount selection (preset or custom).
+      - Time entry with "Set to Now" functionality.
+      - Ephemeris table and altitude path plot for a selected asteroid.
+      - Orbital elements display and copy-to-clipboard functionality.
+      - Observable asteroids filtering and selection.
+      - Integration with external utility functions for data retrieval and plotting.
+      - GUI elements for telescope communication and control (placeholders for actual implementation).
+    Args:
+        root (tk.Tk or tk.Toplevel): The parent Tkinter window.
+    Returns:
+        None
+    """
+
     ephemeris_window = tk.Toplevel(root)
     ephemeris_window.title("Asteroid Tools")
-    ephemeris_window.geometry("950x600")
+    ephemeris_window.geometry("1000x600")
 
     notebook = ttk.Notebook(ephemeris_window)
     notebook.place(x=0, y=145, relwidth=1, relheight=1)
 
-    tab_ephemeris = tk.Frame(notebook)
-    tab_orbital = tk.Frame(notebook)
     tab_neos = tk.Frame(notebook)
+    tab_ephemeris = tk.Frame(notebook)
 
-    notebook.add(tab_ephemeris, text='Ephemeris')
-    notebook.add(tab_orbital, text='Orbital Elements')
     notebook.add(tab_neos, text='Whats Observable?')
+    notebook.add(tab_ephemeris, text='Track Asteroid')
 
     designation_entry = tk.Entry(ephemeris_window)
     designation_entry.place(x=130, y=10, width=50)
@@ -91,7 +114,7 @@ def create_window(root):
 
     tk.Button(ephemeris_window, text="Set to Now", command=lambda: time_entry.delete(0, tk.END) or time_entry.insert(0, datetime.now().isoformat())).place(x=235, y=97, width=80)
 
-    columns = ("RA", "Dec", "Mag", "Distance km", "au", "daily motion (deg)")
+    columns = ("RA", "Dec", "Mag", "Distance km", "au", "daily motion", "rms arcsec")
     ephem_table = ttk.Treeview(tab_ephemeris, columns=columns, show='headings', height=1)
     for col in columns:
         ephem_table.heading(col, text=col)
@@ -99,7 +122,7 @@ def create_window(root):
     ephem_table.place(x=10, y=10)
 
     graph_frame = tk.Frame(tab_ephemeris)
-    graph_frame.place(x=265, y=80, width=650, height=350)
+    graph_frame.place(x=315, y=80, width=650, height=350)
     fig, ax = plt.subplots(figsize=(7.5, 3), dpi=80)
     ax.set_xlabel("Time hours from now)")
     ax.set_ylim(0, 90)
@@ -108,11 +131,9 @@ def create_window(root):
     ax.set_title("Altitude Path")
     ax.grid(True)
     fig.tight_layout()
-
-
     
     duration_slider = tk.Scale(tab_ephemeris, from_=1, to=24, resolution=1, orient=tk.HORIZONTAL)
-    duration_slider.place(x=540, y=320)
+    duration_slider.place(x=670, y=320)
     duration_slider.set(10)
     canvas = FigureCanvasTkAgg(fig, master=graph_frame)
     canvas_widget = canvas.get_tk_widget()
@@ -146,16 +167,16 @@ def create_window(root):
         start_time = ts.from_datetime(dt)
         end_time = ts.from_datetime(dt + timedelta(hours=duration_hr))
         times = ts.linspace(start_time, end_time, 100)
-        now = ts.now()
-        #print(asteroids_df.head())
+        
+        print(asteroids_df.head())
         match = asteroids_df[asteroids_df['designation_packed'] == num]
         if match.empty:
             print(f"No match found for {num} in MPCORB")
             ephem_table.insert("", tk.END, values=[f"No match in MPCORB: {num}"] + ["-"] * (len(columns) - 1))
             return
         row = match.iloc[0]
-        # print(f"Row data: {row}")
-        # print(asteroids_df.columns)
+        print(f"Row data: {row}")
+        print(asteroids_df.columns)
         minor_planet = sun + mpc.mpcorb_orbit(row, ts, GM_SUN)
         orbit = mpc.mpcorb_orbit(row, ts, GM_SUN)
 
@@ -164,14 +185,15 @@ def create_window(root):
         apparent = astrometric.apparent()
         alt, az, distance = apparent.altaz()
         alt_list = alt.degrees
-        time_list = [(t - now) * 24 for t in times]
+        time_list = [(t - start_time) * 24 for t in times]
+        #print(f"Time list: {time_list}")
 
         t1=times[0]
         t1 = t1.utc_strftime('%Y-%m-%d %H:%M')
         ra_array, dec_array, _ = apparent.radec()
         ra_scalar = Angle(degrees=ra_array.degrees[0])
         dec_scalar = Angle(degrees=dec_array.degrees[0])
-        print(type(ra_scalar), type(dec_scalar))
+        #print(type(ra_scalar), type(dec_scalar))
         ephem_table.insert("", tk.END, values=(
             ra_scalar.hstr(warn=False),
             dec_scalar.dstr(),
@@ -179,45 +201,15 @@ def create_window(root):
             f"{distance.km[0] / 1.496e+8:.3f} au",
             f"{row['semimajor_axis_au']:.3f}",
             f"{row['mean_daily_motion_degrees']:.2f}",
-            "-"
+            f"{row['rms_residual_arcseconds']:.2f}"
         ))
 
-        plot_asteroid_altaz_path(alt_list, time_list)
-
-
-
-    def plot_asteroid_altaz_path(alt_list, time_list):
-        above_list = []
-        below_list = []
-        break_points = []
-        ax.clear()
-
-        above = [(t, alt) for t, alt in zip(time_list, alt_list) if alt >= 0]
-        below = [(t, alt) for t, alt in zip(time_list, alt_list) if alt < 0]
-        if above:
-            for segment in ut.split_segments(above):
-                t_seg, alt_seg = zip(*segment)
-                ax.plot(t_seg, alt_seg, 'r')
-        if below:
-            for segment in ut.split_segments(below):
-                t_seg, alt_seg = zip(*segment)
-                ax.plot(t_seg, alt_seg, 'grey')
-
-        ax.set_xlabel("Time (hours from now)")
-        ax.set_ylabel("Altitude (deg)")
-        ax.set_title("Altitude Path")
-        ax.axhline(y=0, color='black', linestyle='--', alpha=0.6)
-        ax.grid(True)
-        ax.set_xlim(min(time_list), max(time_list))
-        ax.set_ylim(min(0, min(alt_list) - 5), max(0, max(alt_list) + 5))
-        canvas.draw()
-
+        ut.plot_asteroid_altaz_path(canvas,ax,alt_list, time_list)
     ttk.Button(tab_ephemeris, text="Refresh", command=refresh).place(x=650, y=10, width=50)
 
-    orbital_elements = tk.Text(tab_orbital, wrap="word")
-    orbital_elements.place(x=10, y=60, width=460, height=90)
+    orbital_elements = tk.Text(tab_ephemeris, wrap="word")
+    orbital_elements.place(x=10, y=300, width=250, height=120)
     orbital_elements.insert("1.0", "Orbital Elements will appear here")
-
     def orbital_printer():
         orb = ut.ORB_EL_printer(mount_var.get(), designation_entry.get())
         orbital_elements.delete("1.0", tk.END)
@@ -230,8 +222,15 @@ def create_window(root):
                 ephemeris_window.clipboard_append(orb_text.split(":", 1)[-1].strip())
                 ephemeris_window.update()
 
-    ttk.Button(tab_orbital, text="Get Tracking Information", command=orbital_printer).place(x=10, y=10, width=140)
-    ttk.Button(tab_orbital, text="Copy", command=copy_to_clipboard).place(x=150, y=10, width=60)
+    ttk.Button(tab_ephemeris, text="Get Tracking Information", command=orbital_printer).place(x=10, y=250, width=140)
+    ttk.Button(tab_ephemeris, text="Copy", command=copy_to_clipboard).place(x=150, y=250, width=60)
+    
+    def add_selected_to_list(selected_data, filtered_headers):
+        selected_listbox.delete(0, tk.END)
+        name_idx = filtered_headers.index("Name") if "Name" in filtered_headers else 0
+        for row in selected_data:
+            selected_listbox.insert(tk.END, row[name_idx])
+
 
     def get_neos():
         lat = lat_entry.get()
@@ -252,14 +251,7 @@ def create_window(root):
         if object_type_var.get() != "all objects":
             object_type = object_type_var.get()
         
-        ut.get_observable_objects(lat, lon, height, obs_time, angle, min_mag, max_mag, object_type,
-                                on_select_callback=add_selected_to_list)
-    def add_selected_to_list(selected_data,filtered_headers):
-        selected_listbox.delete(0, tk.END)  
-        name_idx = filtered_headers.index("Name") if "Name" in filtered_headers else 0 
-        for row in selected_data:
-                selected_listbox.insert(tk.END, row[name_idx])
-            
+        ut.get_observable_objects(lat, lon, height, obs_time, angle, min_mag, max_mag, object_type,on_select_callback=add_selected_to_list, parent_frame=tab_neos,tree_widget=observable_tree)            
             
     angle_entry = tk.Entry(tab_neos)
     angle_entry.place(x=105, y=10, width=30)
@@ -285,12 +277,26 @@ def create_window(root):
         values=["all objects", "PHA", "NEO"], state="readonly"
     )
     object_type_menu.place(x=100, y=70, width=100)
-
-
+    title_font = tkFont.Font(family="Helvetica", size=12, weight="bold")
+    tk.Label(tab_neos, text="Selected Asteroids",font=title_font).place(x=800, y=15)
     ttk.Button(tab_neos, text="Get Observable Asteroids", command=get_neos).place(x=10, y=105, width=200)
     selected_listbox = tk.Listbox(tab_neos, height=10, width=50)
-    selected_listbox.place(x=220, y=10)
+    selected_listbox.place(x=800, y=50,width=180, height=300)
     
+    tk.Label(tab_neos, text="Observable Asteroids",font=title_font).place(x=220, y=15)
+    observable_tree = SelectableTreeView(tab_neos, show="tree headings", height=10)
+    observable_tree.place(x=220, y=50, width=500, height=300)
+
+    observable_tree["columns"] = ["Full Name","Rise time","Transit time", "Set time", "Vmag", "Helio Range au"]
+    
+    observable_tree.heading("#0", text="Select")
+    observable_tree.column("#0", width=50, stretch=False, anchor="center")
+    observable_tree.heading("#1", text="Full Name")
+    observable_tree.column("#1", width=50, anchor="center")
+    for col in observable_tree["columns"]:
+        observable_tree.heading(col, text=col)
+        observable_tree.column(col, width=30, anchor="center")
+
     def on_listbox_select(event):
         selection = event.widget.curselection()
         if selection:
@@ -306,8 +312,17 @@ def create_window(root):
     tk.Label(tab_ephemeris, text="Azimuth").place(x=10, y=100)
     
     telescope_comms = tk.Text(tab_ephemeris, wrap="word")
-    telescope_comms.place(x=10, y=140, width=150, height=150)
+    telescope_comms.place(x=10, y=140, width=250, height=70)
     telescope_comms.insert("1.0", "Telescope Comms will apear here")
+    
+    
+    def remove_selected():
+        selected_indices = selected_listbox.curselection()
+        for index in reversed(selected_indices):  # Reverse so we don't mess up indices when deleting
+            selected_listbox.delete(index)
+    ttk.Button(tab_neos, text="Remove", command=remove_selected).place(x=800, y=350, width=100)
+    btn_add = ttk.Button(tab_neos, text="Add")
+    btn_add.place(x=650, y=350, width=50, height=30)
 
     def goto():
         print("Going to Asteroid")

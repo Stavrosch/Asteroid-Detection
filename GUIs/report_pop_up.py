@@ -26,11 +26,9 @@ def convert_date(date_string):
 
 
 def show_report_window(RAs, Decs,DATE,m):
-    # Create a new popup window
     report_window = tk.Toplevel()
     report_window.title("MPC Report")
 
-    # Textbox to display the MPC report.
     mpc_date=convert_date(DATE)
     report_text = format_mpc_report(RAs, Decs,mpc_date,m)
     text_box = tk.Text(report_window, wrap='word', height=15, width=70)
@@ -38,7 +36,6 @@ def show_report_window(RAs, Decs,DATE,m):
     text_box.config(state='disabled')
     text_box.pack(pady=10, padx=10)
 
-    # Copy to clipboard button
     def copy_to_clipboard(text):
         report_window.clipboard_clear()
         report_window.clipboard_append(text)
