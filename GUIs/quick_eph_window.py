@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import ttk
 from astroquery.mpc import MPC
 from astropy.coordinates import EarthLocation
-from datetime import datetime
+from datetime import datetime, timezone
 import astropy.units as u
 from astropy.coordinates import Angle
 from astropy.time import Time
@@ -141,12 +141,19 @@ def create_window(root):
     toolbar = NavigationToolbar2Tk(canvas, graph_frame)
     toolbar.update()
     toolbar.place(x=10, y=240)
+    alt_var = tk.StringVar(value="N/A")
+    az_var = tk.StringVar(value="N/A")
 
+    tk.Label(tab_ephemeris, text="Altitude:").place(x=10, y=80)
+    tk.Label(tab_ephemeris, textvariable=alt_var).place(x=80, y=80)
+
+    tk.Label(tab_ephemeris, text="Azimuth:").place(x=10, y=100)
+    tk.Label(tab_ephemeris, textvariable=az_var).place(x=80, y=100)
+
+    altaz_job = {"id": None} 
     def refresh():
         for row in ephem_table.get_children():
-            ephem_table.delete(row)
-
-        
+            ephem_table.delete(row)        
         designation = designation_entry.get().strip()
         number_to_find = designation
         num=number_to_find
@@ -162,29 +169,32 @@ def create_window(root):
         height = float(height_entry.get())
         location = Topos(latitude_degrees=lat, longitude_degrees=lon, elevation_m=height)
         observer = earth + location
-        dt = datetime.fromisoformat(time_entry.get()).replace(tzinfo=utc)
+        dt = datetime.now().astimezone().astimezone(timezone.utc)
         duration_hr = duration_slider.get()
         start_time = ts.from_datetime(dt)
+        print(f"Start time: {start_time.utc_strftime('%Y-%m-%d %H:%M')}, Duration: {duration_hr} hours")
         end_time = ts.from_datetime(dt + timedelta(hours=duration_hr))
+        #print(f"End time: {end_time.utc_strftime('%Y-%m-%d %H:%M')}")
         times = ts.linspace(start_time, end_time, 100)
+        #print(f"Times: {times[0]}")
         
-        print(asteroids_df.head())
+        #print(asteroids_df.head())
         match = asteroids_df[asteroids_df['designation_packed'] == num]
         if match.empty:
             print(f"No match found for {num} in MPCORB")
             ephem_table.insert("", tk.END, values=[f"No match in MPCORB: {num}"] + ["-"] * (len(columns) - 1))
             return
         row = match.iloc[0]
-        print(f"Row data: {row}")
-        print(asteroids_df.columns)
+        #print(f"Row data: {row}")
+        #print(asteroids_df.columns)
         minor_planet = sun + mpc.mpcorb_orbit(row, ts, GM_SUN)
         orbit = mpc.mpcorb_orbit(row, ts, GM_SUN)
 
         alt_list, time_list = [], []
-        astrometric = observer.at(times).observe(minor_planet)
-        apparent = astrometric.apparent()
+        apparent = observer.at(times).observe(minor_planet).apparent()
         alt, az, distance = apparent.altaz()
         alt_list = alt.degrees
+        az_list = az.degrees
         time_list = [(t - start_time) * 24 for t in times]
         #print(f"Time list: {time_list}")
 
@@ -205,6 +215,10 @@ def create_window(root):
         ))
 
         ut.plot_asteroid_altaz_path(canvas,ax,alt_list, time_list)
+        if altaz_job["id"] is not None:
+            ephemeris_window.after_cancel(altaz_job["id"])
+        update_live_altaz(minor_planet, observer, alt_var, az_var, ephemeris_window)
+
     ttk.Button(tab_ephemeris, text="Refresh", command=refresh).place(x=650, y=10, width=50)
 
     orbital_elements = tk.Text(tab_ephemeris, wrap="word")
@@ -359,6 +373,19 @@ def create_window(root):
         height_entry.insert(0, h)
 
     location_combobox.bind("<<ComboboxSelected>>", lambda e: on_location_change())
+
+    def update_live_altaz(minor_planet, observer, alt_var, az_var, ephemeris_window):
+        def update():
+            now = ts.now()
+            #print(now)
+            app = observer.at(now).observe(minor_planet).apparent()
+            alt, az, _ = app.altaz()
+
+            alt_var.set(f"{alt.degrees:.2f}°")
+            az_var.set(f"{az.degrees:.2f}°")
+            altaz_job["id"] = ephemeris_window.after(3000, update)
+        update()
+
 if __name__ == "__main__":
     root = customtkinter.CTk()
     root.title("Main Application")
