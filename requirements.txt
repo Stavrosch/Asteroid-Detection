@@ -1,0 +1,12 @@
+astropy
+astroquery
+customtkinter
+Pillow
+matplotlib
+numpy
+pandas
+photutils
+requests
+scikit-image
+skyfield
+twirl
