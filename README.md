@@ -2,17 +2,19 @@
 
 Toolkit created as part of an MSc thesis on automatic asteroid detection.
 The repository contains a set of graphical utilities for analysing FITS
-images, tracking known asteroids and plate solving observations.  The main
-entry point is a simple launcher window that opens the available tools.
+images, tracking known asteroids and plate solving observations.
 
 ## Requirements
 
 - **Python**: version 3.11 or later is recommended.
+- **Windows**
 - **Dependencies** (installable with `pip`):
   `astropy`, `astroquery`, `pandas`, `skyfield`, `matplotlib`, `customtkinter`,
   `Pillow`, `requests` and optionally `pwi4_client` for telescope control.
+
+
   Plate solving can use either `astroquery.astrometry_net` with an Astrometry.net
-  API key or a local installation of `astrometry.net`.
+  API key which needs to be added directly to the code in GUIs/Utilittes/ps_API.py line 23 or a local installation of `astrometry.net`.
 
 ### Installation
 
