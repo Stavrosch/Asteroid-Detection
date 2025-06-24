@@ -25,10 +25,10 @@ entry point is a simple launcher window that opens the available tools.
 
 ## Data files
 
-Some modules expect a pre-generated Minor Planet Center database in
-`GUIs/Utilities/mpcorb_df.pkl`.  If this file is not present, download the
-`mpcorb.dat` catalogue from the MPC and convert it into a pandas DataFrame saved
-at this location.
+Several tools depend on a pickled catalogue of minor planet orbits named
+`GUIs/Utilities/mpcorb_df.pkl`.  This file is not included in the repository.
+See [DATA_PREPARATION.md](DATA_PREPARATION.md) for instructions on downloading
+the MPCORB catalogue from the Minor Planet Center and generating the pickle.
 
 ## Running
 
