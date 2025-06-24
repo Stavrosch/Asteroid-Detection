@@ -21,3 +21,4 @@ from .split_segments import split_segments
 from .get_observable2 import SelectableTreeView
 from. detector import detector
 from. plotaltaz import plot_asteroid_altaz_path
+from .altazupdate import update_live_altaz

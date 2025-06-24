@@ -11,18 +11,15 @@ def residual_calc(hdu,JOB_ID):
     pixel_scales_deg = proj_plane_pixel_scales(wcs)
     pixel_scales_arcsec = pixel_scales_deg * 3600 
     mean_pixel_scale_arcsec = np.mean(pixel_scales_arcsec)
-    #print(wcs)
+
     ANNOTATION_URL = f"http://nova.astrometry.net/api/jobs/{JOB_ID}/annotations/"
     print(ANNOTATION_URL)
 
-
     response = requests.get(ANNOTATION_URL,timeout=10)
     print(response.status_code)  # Should be 200
-    #print(response.text)
-    #print(response.headers)
+
     data = response.json()
-    #print('hi')
-    #print(data)
+
     annotations = data.get("annotations", [])
 
 

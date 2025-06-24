@@ -87,7 +87,7 @@ def blob_detection(data,t, image,ZMAG,EXPTIME, aperture_radius=5):
                 if neighbor_value<0.2*pixel_value or neighbor_value<background_threshold: #->median background
                     continue
 
-        valid_blobs.append(i)
+       
         
         ### CALCULATE FLUX WITHIN AN APERTURE ###
         y_min = max(0, y - aperture_radius)
@@ -103,27 +103,25 @@ def blob_detection(data,t, image,ZMAG,EXPTIME, aperture_radius=5):
             #print(i)
             if zero_point_mag is not None:
                 zero_point_mags.append(zero_point_mag)
+        if flux > 0:
+            valid_blobs.append(i)
+            fluxes.append(flux)
 
-        fluxes.append(flux)
     magnitudes = []
     
     
     for i in range(len(fluxes)):    
         ### CONVERT FLUX TO MAGNITUDE ###
         flux = fluxes[i]
-        if flux > 0:
-            if ZMAG == 0:
+        if ZMAG == 0:
                 z = np.mean(zero_point_mags)
                 mag = z - 2.5 * np.log10(flux)
                 magnitudes.append(mag)
-            else:
+        else:
                 z = ZMAG
                 mag= -2.5 * np.log10(flux/EXPTIME)+ZMAG
                 magnitudes.append(mag)
-                
-            #print(mag2,mag)
-        else:
-            mag = np.nan  # Handle cases where flux is zero or negative
+
 
         
     print(f"Zero-point magnitude: {z}")
