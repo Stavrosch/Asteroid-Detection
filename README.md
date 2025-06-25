@@ -14,7 +14,7 @@ images, tracking known asteroids and plate solving observations.
 
 
   Plate solving can use either `astroquery.astrometry_net` with an Astrometry.net
-  API key which needs to be added directly to the code in GUIs/Utilittes/ps_API.py line 23 or a local installation of `astrometry.net`.
+  API key which needs to be added directly to the code in 'GUIs/Utilittes/ps_API.py' 'line 23' or a local installation of `astrometry.net`.
 
 ### Installation
 
