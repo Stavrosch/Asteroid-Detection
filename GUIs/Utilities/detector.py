@@ -56,7 +56,7 @@ def detector(progs_bar,progs_lbl,progs_win,image_path,threshold,pltfrm):
         image_data=fits.getdata(image_path)
         header=image.header 
         
-        progs_lbl.config(text="Loading FITS file...")        
+        progs_lbl.configure(text="Loading FITS file...")        
         progs_bar['value']=10
         progs_bar.update()
 
@@ -98,7 +98,7 @@ def detector(progs_bar,progs_lbl,progs_win,image_path,threshold,pltfrm):
         wcs=WCS(image.header)
         
         ra_c,dec_c=ut.image_center(NAXIS1,NAXIS2,wcs)
-        progs_lbl.config(text="Quering stars...")
+        progs_lbl.configure(text="Quering stars...")
         progs_bar['value']=40
         progs_bar.update()
         
@@ -107,7 +107,7 @@ def detector(progs_bar,progs_lbl,progs_win,image_path,threshold,pltfrm):
         ded=np.array(r['dec'])
         rmag=np.array(r['phot_g_mean_mag'])
         
-        progs_lbl.config(text="Running detection algorithm...")
+        progs_lbl.configure(text="Running detection algorithm...")
         progs_bar['value']=50
         progs_bar.update()
 
@@ -180,7 +180,7 @@ def detector(progs_bar,progs_lbl,progs_win,image_path,threshold,pltfrm):
         norm=ImageNormalize(stretch=SqrtStretch())
 
         detect_srcs.sort('xcentroid')
-        progs_lbl.config(text="Removing Hot Pixels...")
+        progs_lbl.configure(text="Removing Hot Pixels...")
         progs_bar['value']=80
         progs_bar.update()
 
