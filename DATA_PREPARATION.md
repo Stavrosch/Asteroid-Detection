@@ -35,14 +35,10 @@ locations shown below:
 
 1. **Get the ASTORB catalogue**
 
-   The asteroid orbital elements database can be downloaded from either the
-   [Minor Planet Center](https://minorplanetcenter.net/) or the
-   [Jet Propulsion Laboratory](https://ssd.jpl.nasa.gov/tools/sbdb_query.html).
-   A direct link to the file is available from JPL's FTP service:
+   The asteroid orbital elements database can be downloaded from a direct link to the file:
 
-   ```bash
-   wget https://ssd.jpl.nasa.gov/ftp/ssd/nearby/astorb/astorb.dat.gz
-   gunzip astorb.dat.gz
+   ```
+   https://asteroid.lowell.edu/astorb/
    ```
 
 2. **Place the file**
@@ -55,16 +51,12 @@ locations shown below:
 
 1. **Download the planetary ephemeris**
 
-   JPL's DE421 ephemeris can be retrieved from the NAIF repository:
+   JPL's DE421 ephemeris can be dowloaded using Skyfield library from:
 
-   ```bash
-   wget https://naif.jpl.nasa.gov/pub/naif/generic_kernels/spk/planets/de421.bsp
    ```
-
-2. **Install the kernel**
-
-   Save the downloaded `de421.bsp` file in the `GUIs` folder.  The
-   `quick_eph_window.py` module loads it with `load('de421.bsp')`, so keeping the
-   file alongside the GUI scripts ensures it is found at runtime.
+   from skyfield.api import load
+   planets = load('de421.bsp')
+   print('Ready')
+    ```
 
 
