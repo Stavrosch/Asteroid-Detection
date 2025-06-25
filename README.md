@@ -34,18 +34,8 @@ the MPCORB catalogue from the Minor Planet Center and generating the pickle.
 
 ## Running
 
-Launch the application with:
+Launch the application by running inside the GUIs folder:
 
-```bash
-python GUIs/GUI_main.py
 ```
-
-The window provides buttons to track asteroids, perform plate solving and run
-the asteroid detection tool.
-
-### Plate solving
-
-Plate solving requires either a valid Astrometry.net API key (for the online
-solver) or a working local installation of `astrometry.net`.  Configure these
-before using the plate solving window.
-
+python GUI_main.py
+```
