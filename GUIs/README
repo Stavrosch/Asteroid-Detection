@@ -1,1 +1,31 @@
-The code to work needs the asteroid data
+# GUI Utilities
+
+This folder contains the Tkinter based graphical front end for the toolkit.
+
+## Scripts
+
+- **GUI_main.py** – small launcher window that opens the individual tools.
+- **asteroid_detection_window.py** – runs the FITS asteroid detection routine.
+- **quick_eph_window.py** – displays asteroid ephemerides and observable objects.
+- **platesolver_window.py** – wrapper around Astrometry.net or local plate solving.
+- **pwi4_client.py** – optional client for communicating with PlaneWave mounts.
+
+## Required data
+
+Several scripts rely on external data files placed in `Utilities`:
+
+- `mpcorb_df.pkl` – Minor Planet Center orbital catalogue used by the ephemeris tool.
+- `astorb.dat` and `MPCORB.dat` – orbit databases read by the printing utilities.
+- `de421.bsp` – JPL ephemeris for Sun/Earth positions.
+
+Follow the steps in [../DATA_PREPARATION.md](../DATA_PREPARATION.md) to obtain these files and copy them into `GUIs/Utilities`.
+
+## Usage
+
+Run the launcher from this directory:
+
+```bash
+python GUI_main.py
+```
+
+This opens the main menu where the above tools can be accessed.
