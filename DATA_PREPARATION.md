@@ -27,10 +27,6 @@ locations shown below:
 
    The resulting `mpcorb_df.pkl` should be placed in `GUIs/Utilities` so that modules like `quick_eph_window.py` can load it.
 
-3. **Updating the file**
-
-   Periodically refresh the file by repeating the steps above with a newer `MPCORB.DAT`.
-
 ## Downloading astorb.dat
 
 1. **Get the ASTORB catalogue**
