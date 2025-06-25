@@ -1,6 +1,9 @@
 # Data Preparation
 
-This repository relies on some additional data files that are not distributed with the code.  The most important is `mpcorb_df.pkl`, a pandas DataFrame containing orbital elements for known minor planets.
+This repository relies on some additional data files that are not distributed with the code.  
+- `mpcorb_df.pkl`
+- `astorb.dat`
+- `de421.bsp`
 
 ## Generating `mpcorb_df.pkl`
 
@@ -25,4 +28,9 @@ This repository relies on some additional data files that are not distributed wi
 3. **Updating the file**
 
    Periodically refresh the file by repeating the steps above with a newer `MPCORB.DAT`.
+
+## Downloading astorb.dat
+
+## Downloading ephemeris de421.bsp
+
 
