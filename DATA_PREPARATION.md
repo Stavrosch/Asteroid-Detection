@@ -54,5 +54,6 @@ locations shown below:
    planets = load('de421.bsp')
    print('Ready')
     ```
+This is already done by the script automatically and dowloaded only the first time.
 
 
