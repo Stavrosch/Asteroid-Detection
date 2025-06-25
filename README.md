@@ -11,10 +11,9 @@ images, tracking known asteroids and plate solving observations.
 - **Dependencies** (installable with `pip`):
   `astropy`, `astroquery`, `pandas`, `skyfield`, `matplotlib`, `customtkinter`,
   `Pillow`, `requests` and optionally `pwi4_client` for telescope control.
-
-
-  Plate solving can use either `astroquery.astrometry_net` with an Astrometry.net
+- **Plate Solving** can use either `astroquery.astrometry_net` with an Astrometry.net
   API key which needs to be added directly to the code in 'GUIs/Utilittes/ps_API.py' 'line 23' or a local installation of `astrometry.net`.
+- **Track Asteroid** requires the astreroid pikled files. see  [DATA_PREPARATION.md](DATA_PREPARATION.md)
 
 ### Installation
 
@@ -24,11 +23,12 @@ images, tracking known asteroids and plate solving observations.
    ```bash
    pip install astropy astroquery pandas skyfield matplotlib customtkinter Pillow requests
    ```
+3. Install data files
 
 ## Data files
 
 Several tools depend on a pickled catalogue of minor planet orbits named
-`GUIs/Utilities/mpcorb_df.pkl`.  This file is not included in the repository.
+`GUIs/Utilities/mpcorb_df.pkl` and others.  This file is not included in the repository.
 See [DATA_PREPARATION.md](DATA_PREPARATION.md) for instructions on downloading
 the MPCORB catalogue from the Minor Planet Center and generating the pickle.
 
