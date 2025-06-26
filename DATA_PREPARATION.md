@@ -20,7 +20,7 @@ locations shown below:
    df.to_pickle('GUIs/Utilities/mpcorb_df.pkl')
    ```
 
-   The resulting `mpcorb_df.pkl` should be placed in `GUIs/Utilities` so that modules like `quick_eph_window.py` can load it.
+   The resulting `mpcorb_df.pkl` should be placed in `GUIs/Utilities`.
 
 ## Downloading astorb.dat
 
