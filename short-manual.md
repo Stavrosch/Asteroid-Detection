@@ -15,7 +15,7 @@ The local solve requires to locally install astrometry.net independently.**
 
 Select a FITS file and magnitude threshold.
 
-Runs detection (calls functions in Utilities/detector.py), marking possible asteroids and allowing generation of an MPC-formatted report.
+Runs detection, marking possible asteroids.
 
 If no asteroid is found lower the threshold and if there are too many detections do the opposite. 
 Use the report button to generate an 80 collumn format report.
