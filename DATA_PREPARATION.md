@@ -8,8 +8,8 @@ locations shown below:
 ## Download the MPCORB catalogue
 
    Visit the [Minor Planet Center MPCORB page](https://minorplanetcenter.net/iau/MPCORB.html) and download the latest `MPCORB.DAT.gz` file. 
-- **Convert to a DataFrame**
-
+- **Convert to a pickle DataFrame**
+   
    Use the `skyfield` utilities to parse the file and save the result as a pickle:
 
    ```python
