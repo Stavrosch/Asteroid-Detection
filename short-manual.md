@@ -1,17 +1,17 @@
-# Track Asteroid / Observable Objects
+## Track Asteroid / Observable Objects
 Provides two tabs:
 
 - “Whats Observable?” – queries JPL’s service for observable asteroids given location, date/time, elevation limit, magnitude range, and object type.
 
 - “Track Asteroid” – displays ephemeris data for a specified asteroid and plots its altitude path.
-# Plate Solver
+## Plate Solver
 
 Plate Solves FITS images via Astrometry.net or a local installation of Astrometry.net and writes a wsc object in.
 
 **If using Astrometry.net, set your API key in GUIs/Utilities/ps_API.py around line 21.
 The local solve requires to locally install astrometry.net independently.**
 
-# Asteroid Detection
+## Asteroid Detection
 
 Select a FITS file and magnitude threshold.
 
