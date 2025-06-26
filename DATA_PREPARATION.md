@@ -1,5 +1,3 @@
-# Data Preparation
-
 This repository relies on a few additional data files that are not distributed
 with the code.  They need to be downloaded or generated and placed in the
 locations shown below:
@@ -7,12 +5,9 @@ locations shown below:
 - `GUIs/Utilities/astorb.dat`
 - `GUIs/de421.bsp`
 
-## Generating `mpcorb_df.pkl`
-
 1. **Download the MPCORB catalogue**
 
-   Visit the [Minor Planet Center MPCORB page](https://minorplanetcenter.net/iau/MPCORB.html) and download the latest `MPCORB.DAT.gz` file.  After downloading, decompress it so that you have `MPCORB.DAT` on disk.
-
+   Visit the [Minor Planet Center MPCORB page](https://minorplanetcenter.net/iau/MPCORB.html) and download the latest `MPCORB.DAT.gz` file. 
 2. **Convert to a DataFrame**
 
    Use the `skyfield` utilities to parse the file and save the result as a pickle:
@@ -39,10 +34,7 @@ locations shown below:
 
 2. **Place the file**
 
-   Copy the resulting `astorb.dat` into `GUIs/Utilities`.  Scripts such as
-   `ORB_EL_printer.py` and `TLE_printer.py` expect to find the catalogue in that
-   directory.
-
+   Copy the resulting `astorb.dat` into `GUIs/Utilities`.
 ## Downloading ephemeris de421.bsp
 
 1. **Download the planetary ephemeris**
