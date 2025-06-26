@@ -5,10 +5,10 @@ locations shown below:
 - `GUIs/Utilities/astorb.dat`
 - `GUIs/de421.bsp`
 
-1. **Download the MPCORB catalogue**
+## Download the MPCORB catalogue
 
    Visit the [Minor Planet Center MPCORB page](https://minorplanetcenter.net/iau/MPCORB.html) and download the latest `MPCORB.DAT.gz` file. 
-2. **Convert to a DataFrame**
+- **Convert to a DataFrame**
 
    Use the `skyfield` utilities to parse the file and save the result as a pickle:
 
