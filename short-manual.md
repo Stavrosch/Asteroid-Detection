@@ -6,7 +6,7 @@ Provides two tabs:
 - “Track Asteroid” – displays ephemeris data for a specified asteroid and plots its altitude path.
 ## Plate Solver
 
-Plate Solves FITS images via Astrometry.net or a local installation of Astrometry.net and writes a wsc object in.
+Plate Solves FITS images via Astrometry.net or a local installation of Astrometry.net and writes a wsc object in the header.
 
 **If using Astrometry.net, set your API key in GUIs/Utilities/ps_API.py around line 21.
 The local solve requires to locally install astrometry.net independently.**
