@@ -17,7 +17,7 @@ locations shown below:
    import pandas as pd
 
    df = mpc.load_mpcorb_dataframe('MPCORB.DAT')
-   df.to_pickle('GUIs/Utilities/mpcorb_df.pkl')
+   df.to_pickle('GUIs/Utilities/mpcorb_df.pkl')**
    ```
 
    The resulting `mpcorb_df.pkl` should be placed in `GUIs/Utilities`.
