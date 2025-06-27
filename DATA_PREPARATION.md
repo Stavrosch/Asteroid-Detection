@@ -15,9 +15,10 @@ locations shown below:
    ```python
    from skyfield.data import mpc
    import pandas as pd
-
-   df = mpc.load_mpcorb_dataframe('MPCORB.DAT')
-   df.to_pickle('GUIs/Utilities/mpcorb_df.pkl')**
+   
+   with open('MPCORB.DAT', 'rb') as f:
+       df = mpc.load_mpcorb_dataframe(f)
+   df.to_pickle('GUIs/Utilities/mpcorb_df.pkl')
    ```
 
    The resulting `mpcorb_df.pkl` should be placed in `GUIs/Utilities`.
