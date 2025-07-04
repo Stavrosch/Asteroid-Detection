@@ -24,17 +24,23 @@ from datetime import timedelta, datetime, timezone
 import tkinter.font as tkFont  # Add at the top
 from Utilities import SelectableTreeView
 from PIL import Image, ImageTk
-
+import os  
+from pathlib import Path
 # TO DO 
 # LOAD TWILIGHT DATA
 
-asteroids_df = pd.read_pickle("Utilities/mpcorb_df.pkl")
-#print(asteroids_df)
-#print(f"Data loaded in {end - start:.2f} seconds")
+BASE_DIR = Path(__file__).resolve().parent
+DATA_DIR = BASE_DIR / "Utilities"
 
-file_name = "Utilities/mpcorb_df.pkl"
+file_name = DATA_DIR / "mpcorb_df.pkl"
+eph_path = DATA_DIR / "de421.bsp"
+
+file_name = os.path.join(DATA_DIR, "mpcorb_df.pkl")
+eph_path = os.path.join(DATA_DIR, "de421.bsp")
+
+asteroids_df = pd.read_pickle(file_name)
 eph = load('de421.bsp')
-#print(f"Ephemeris loaded in {end2 - end:.2f} seconds")
+
 sun, earth = eph['sun'], eph['earth']
 ts = load.timescale()
 
@@ -366,9 +372,9 @@ def create_window(root):
 
     def update_location_label():
         locations = {
-            "AUTH-3": ('34.932056', '32.840167', '1411'),
             "AUTH-1": ('40.5624', '22.9956', '68'),
-            "AUTH-2": ('40.43291', '23.5055', '800')
+            "AUTH-2": ('40.43291', '23.5055', '800'),
+            "AUTH-3": ('34.932056', '32.840167', '1411')
         }
         lat, lon, h = locations.get(location_var.get(), ('', '', ''))
         lat_entry.delete(0, tk.END)
