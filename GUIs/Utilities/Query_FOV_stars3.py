@@ -1,39 +1,44 @@
-import numpy as np
-from astropy.wcs import WCS
+from astroquery.gaia import Gaia
 from astropy.coordinates import SkyCoord
 import astropy.units as u
-from astroquery.gaia import Gaia
+import numpy as np
 
-def Query_FOV_stars3(wcs,RA,DEC,width,height):
+def Query_FOV_stars3(RA_deg, DEC_deg, width, height, query_length,NAXIS1, NAXIS2, wcs,
+                    rotation_angle=0, mag_column="phot_g_mean_mag"):
+    """Query Gaia within a rotated rectangular FOV."""
     Gaia.MAIN_GAIA_TABLE = "gaiaedr3.gaia_source"
-    Gaia.ROW_LIMIT = 1000  # Adjust row limit as needed
+    Gaia.ROW_LIMIT = query_length
     
+    # Calculate the four corners
+    # Get the four corners of the image in sky coordinates
+    corners_pixels = [
+        [0, 0],          # Bottom-left
+        [0, NAXIS2],     # Top-left
+        [NAXIS1, NAXIS2],# Top-right
+        [NAXIS1, 0]      # Bottom-right
+    ]
     
-    center = SkyCoord(ra=RA, dec=DEC, unit='deg', frame='icrs')
-    dx = width / 2
-    dy = height/ 2
-    corners = np.array([[-dx, -dy], [dx, -dy], [dx, dy], [-dx, dy]])
+    # Convert pixel coordinates to RA/Dec
+    corners_sky = wcs.pixel_to_world_values(corners_pixels)
 
-    # Apply the CD matrix (rotation and scale)
-    rotated_corners = np.dot(corners, wcs.wcs.cd)
-
-    # Convert back to world coordinates (RA/DEC)
-    world_coords = wcs.wcs_pix2world(rotated_corners, 1)
-    rotated_ra_dec = SkyCoord(world_coords[:, 0], world_coords[:, 1], unit='deg')
-
-    # Construct the polygon query
-    polygon_query = ", ".join([f"{ra}, {dec}" for ra, dec in zip(rotated_ra_dec.ra.deg, rotated_ra_dec.dec.deg)])
-
+    polygon = "POLYGON('ICRS', " + ", ".join([f"{ra}, {dec}" for ra, dec in corners_sky]) + ")"    
+    
     query = f"""
-    SELECT *
+    SELECT TOP {10* query_length}*
     FROM gaiaedr3.gaia_source
     WHERE 1=CONTAINS(
-        POINT('ICRS', gaiaedr3.gaia_source.ra, gaiaedr3.gaia_source.dec),
-        POLYGON('ICRS', {polygon_query})
+        POINT('ICRS', ra, dec),
+        {polygon}
     )
+    ORDER BY {mag_column} ASC
     """
     
-    job = Gaia.launch_job_async(query=query)
-    results = job.get_results()
     
-    return results
+    try:
+        job = Gaia.launch_job_async(query)
+        results = job.get_results()
+        print(f"Number of stars in FOV: {len(results)}")
+        return results
+    except Exception as e:
+        print(f"Error: {str(e)}")
+        return None

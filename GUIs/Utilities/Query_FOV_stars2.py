@@ -2,10 +2,10 @@ from astroquery.gaia import Gaia
 from astropy.coordinates import SkyCoord
 import astropy.units as u
 
-def Query_FOV_stars2(RA_deg, DEC_deg, width, height, mag_column="phot_g_mean_mag"):
+def Query_FOV_stars2(RA_deg, DEC_deg, width, height,query_length, mag_column="phot_g_mean_mag"):
     Gaia.MAIN_GAIA_TABLE = "gaiaedr3.gaia_source"
-    Gaia.ROW_LIMIT = 1000  
-    print('hi')
+    Gaia_ROW_LIMIT = query_length 
+    #print('hi')
     coord = SkyCoord(ra=RA_deg, dec=DEC_deg, unit='deg', frame='icrs')
     width = u.Quantity(width, u.deg)
     height = u.Quantity(height, u.deg)
@@ -21,10 +21,11 @@ def Query_FOV_stars2(RA_deg, DEC_deg, width, height, mag_column="phot_g_mean_mag
     ORDER BY {mag_column} ASC
     """
 
+
     job = Gaia.launch_job_async(query=query)
     results = job.get_results()
-    print('hi')
-
+    #print('hi')
+    print(f"Number of stars in FOV: {len(results)}")
     #print('mag_column:', results["phot_g_mean_mag"][0])
     return results
 
