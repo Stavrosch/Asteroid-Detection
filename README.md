@@ -1,11 +1,11 @@
-# Asteroid-Detection
+# Asteroid-Detection v1.0.0
 
 Toolkit created as part of an MSc thesis on automatic asteroid detection. The repository contains a set of graphical utilities for analysing FITS images, tracking known asteroids and plate solving observations.
 
 ## Requirements
 
 - **Python**: version 3.11 or later is recommended.
-- **Windows**
+- **Windows** & **WSL** (WSL needeed to run astrometry.net locally, for online Plate Solving, not needed)
 - **Dependencies** (installable with `pip`):
   `astropy`, `astroquery`, `pandas`, `skyfield`, `matplotlib`, `customtkinter`,
   `Pillow`, `requests` and optionally `pwi4_client` for telescope control.
