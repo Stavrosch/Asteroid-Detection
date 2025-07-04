@@ -16,7 +16,27 @@ def show_progress_and_run(parent_window,pltfrm,image_path,threshold):
 
     progs_bar=ttk.Progressbar(progs_win,orient="horizontal",length=200,mode="determinate")
     progs_bar.pack(pady=10)
+    
+    # tree_frame = tk.Frame(pltfrm)
+    # tree_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=False)
+    
+    # tree_scroll = tk.Scrollbar(tree_frame)
+    # tree_scroll.pack(side=tk.RIGHT, fill=tk.Y)
+    # tree = ttk.Treeview(tree_frame, yscrollcommand=tree_scroll.set, selectmode="extended")
+    # tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+    # tree_scroll.config(command=tree.yview)
+
+    # tree['columns'] = ("X", "Y", "Mag")
+    # tree.column("#0", width=0, stretch=tk.NO)  
+    # tree.column("X", anchor=tk.CENTER, width=80)
+    # tree.column("Y", anchor=tk.CENTER, width=80)
+    # tree.column("Mag", anchor=tk.CENTER, width=80)
+
+    # tree.heading("X", text="X", anchor=tk.CENTER)
+    # tree.heading("Y", text="Y", anchor=tk.CENTER)
+    # tree.heading("Mag", text="Mag", anchor=tk.CENTER)    
     ut.detector(progs_bar,progs_lbl,progs_win,image_path ,threshold,pltfrm)
+    
 
 
 def choose_file(window,threshold,pltfrm):
@@ -36,6 +56,7 @@ def choose_file(window,threshold,pltfrm):
 
 def create_window(parent):
     winast=tk.Toplevel(parent)
+    #winast.configure(background='black')
     winast.title("Asteroid Detection Window")
     winast.geometry("1000x800")
 

@@ -20,7 +20,7 @@ import pandas as pd
 import time
 from skyfield.units import Angle
 from matplotlib.backends.backend_tkagg import NavigationToolbar2Tk
-from datetime import timedelta
+from datetime import timedelta, datetime, timezone
 import tkinter.font as tkFont  # Add at the top
 from Utilities import SelectableTreeView
 from PIL import Image, ImageTk
@@ -28,15 +28,13 @@ from PIL import Image, ImageTk
 # TO DO 
 # LOAD TWILIGHT DATA
 
-start = time.time()
-asteroids_df = pd.read_pickle("GUIs/Utilities/mpcorb_df.pkl")
-end = time.time()
-print(f"Data loaded in {end - start:.2f} seconds")
+asteroids_df = pd.read_pickle("Utilities/mpcorb_df.pkl")
+#print(asteroids_df)
+#print(f"Data loaded in {end - start:.2f} seconds")
 
-file_name = "GUIs/Utilities/mpcorb_df.pkl"
+file_name = "Utilities/mpcorb_df.pkl"
 eph = load('de421.bsp')
-end2 = time.time()
-print(f"Ephemeris loaded in {end2 - end:.2f} seconds")
+#print(f"Ephemeris loaded in {end2 - end:.2f} seconds")
 sun, earth = eph['sun'], eph['earth']
 ts = load.timescale()
 
@@ -114,7 +112,7 @@ def create_window(root):
 
     tk.Button(ephemeris_window, text="Set to Now", command=lambda: time_entry.delete(0, tk.END) or time_entry.insert(0, datetime.now().isoformat())).place(x=235, y=97, width=80)
 
-    columns = ("RA", "Dec", "Mag", "Distance km", "au", "daily motion", "rms arcsec")
+    columns = ("Designation","RA", "Dec", "Mag", "Distance km", "au", "daily motion", "rms arcsec")
     ephem_table = ttk.Treeview(tab_ephemeris, columns=columns, show='headings', height=1)
     for col in columns:
         ephem_table.heading(col, text=col)
@@ -169,7 +167,12 @@ def create_window(root):
         height = float(height_entry.get())
         location = Topos(latitude_degrees=lat, longitude_degrees=lon, elevation_m=height)
         observer = earth + location
-        dt = datetime.now().astimezone().astimezone(timezone.utc)
+        time_str = time_entry.get().strip()
+        dt = datetime.fromisoformat(time_str)
+        dt = dt.astimezone().astimezone(timezone.utc)
+        #dt = datetime.now().astimezone().astimezone(timezone.utc)
+
+        #dt = ts.now()
         duration_hr = duration_slider.get()
         start_time = ts.from_datetime(dt)
         print(f"Start time: {start_time.utc_strftime('%Y-%m-%d %H:%M')}, Duration: {duration_hr} hours")
@@ -180,11 +183,13 @@ def create_window(root):
         
         #print(asteroids_df.head())
         match = asteroids_df[asteroids_df['designation_packed'] == num]
+
         if match.empty:
             print(f"No match found for {num} in MPCORB")
-            ephem_table.insert("", tk.END, values=[f"No match in MPCORB: {num}"] + ["-"] * (len(columns) - 1))
+            ephem_table.insert("", tk.END, values=[f"No match: {num}"] + ["-"] * (len(columns) - 1))
             return
         row = match.iloc[0]
+        name = row['designation']
         #print(f"Row data: {row}")
         #print(asteroids_df.columns)
         minor_planet = sun + mpc.mpcorb_orbit(row, ts, GM_SUN)
@@ -205,6 +210,7 @@ def create_window(root):
         dec_scalar = Angle(degrees=dec_array.degrees[0])
         #print(type(ra_scalar), type(dec_scalar))
         ephem_table.insert("", tk.END, values=(
+            f"{row['designation_packed']}",
             ra_scalar.hstr(warn=False),
             dec_scalar.dstr(),
             f"{row['magnitude_H']:.2f}",
@@ -214,12 +220,12 @@ def create_window(root):
             f"{row['rms_residual_arcseconds']:.2f}"
         ))
 
-        ut.plot_asteroid_altaz_path(canvas,ax,alt_list, time_list)
+        ut.plot_asteroid_altaz_path(canvas,ax,alt_list, time_list,name)
         if altaz_job["id"] is not None:
             ephemeris_window.after_cancel(altaz_job["id"])
-        update_live_altaz(minor_planet, observer, alt_var, az_var, ephemeris_window)
+        update_live_altaz(minor_planet, observer, alt_var, az_var, ephemeris_window,dt)
 
-    ttk.Button(tab_ephemeris, text="Refresh", command=refresh).place(x=650, y=10, width=50)
+    ttk.Button(tab_ephemeris, text="Refresh", command=refresh).place(x=750, y=10, width=50)
 
     orbital_elements = tk.Text(tab_ephemeris, wrap="word")
     orbital_elements.place(x=10, y=300, width=250, height=120)
@@ -307,7 +313,7 @@ def create_window(root):
     observable_tree.column("#0", width=50, stretch=False, anchor="center")
     observable_tree.heading("#1", text="Full Name")
     observable_tree.column("#1", width=50, anchor="center")
-    for col in observable_tree["columns"]:
+    for col in observable_tree["columns"]: 
         observable_tree.heading(col, text=col)
         observable_tree.column(col, width=30, anchor="center")
 
@@ -374,10 +380,9 @@ def create_window(root):
 
     location_combobox.bind("<<ComboboxSelected>>", lambda e: on_location_change())
 
-    def update_live_altaz(minor_planet, observer, alt_var, az_var, ephemeris_window):
+    def update_live_altaz(minor_planet, observer, alt_var, az_var, ephemeris_window,dt):
         def update():
             now = ts.now()
-            #print(now)
             app = observer.at(now).observe(minor_planet).apparent()
             alt, az, _ = app.altaz()
 
