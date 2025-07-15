@@ -8,6 +8,10 @@ locations shown below:
 ## Download the MPCORB catalogue
 
    Visit the [Minor Planet Center MPCORB page](https://minorplanetcenter.net/iau/MPCORB.html) and download the latest `MPCORB.DAT.gz` file. 
+
+- **Remove Lines**
+  After extracting the MPCORB.dat file delete the first 44 rows.
+  
 - **Convert to a pickle DataFrame**
    
    Use the `skyfield` utilities to parse the file and save the result as a pickle:
