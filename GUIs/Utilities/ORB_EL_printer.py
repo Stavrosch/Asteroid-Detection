@@ -22,7 +22,7 @@ def ORB_EL_printer(mount,ast):
     number_to_find=ast
     ans=mount
     if ans=='10Micron':
-        file_name='MPCORB.dat'
+        file_name='mpcorb.pkl'
         num=number_to_find
         for i in range(5-len(number_to_find)):
             num='0'+num

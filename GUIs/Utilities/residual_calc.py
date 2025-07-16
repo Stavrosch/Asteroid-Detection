@@ -48,8 +48,6 @@ def residual_calc(hdu,JOB_ID):
             job = Gaia.launch_job(gaia_query)
             #print(job)
             results = job.get_results()
-            print(results)
-            print("Hello World")
             #print(results.status_code)  # Should be 200
 
             if len(results) > 0:

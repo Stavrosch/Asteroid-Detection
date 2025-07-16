@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 from astropy.io import fits
 from matplotlib.colors import LogNorm
 import matplotlib.patches as patches
+from astropy.visualization import ZScaleInterval,LogStretch,ImageNormalize,LinearStretch
 
 
 def FOV_calc(NAXIS1, NAXIS2, XPIXSZ, YPIXSZ, focal_length):
@@ -18,7 +19,8 @@ def FOV_calc(NAXIS1, NAXIS2, XPIXSZ, YPIXSZ, focal_length):
 
 if __name__ == "__main__":
     # Load FITS file
-    Img = r'C:\Users\stavr\OneDrive\Desktop\Asteroid Data\AUTH-3\301_mpc\301_mpc_1.1\01_22_43\301_mpc_1.1_00001.fits'
+    Img = r'c:\Users\stavr\OneDrive\Desktop\Asteroid Data\AUTH-2\253\253_mpc_1.1\22_17_14\253_mpc_1.1_00001.fits'
+    
     file = fits.open(Img)
     image = file[0]
     data = image.data
@@ -38,7 +40,7 @@ if __name__ == "__main__":
 
     # Plot the image data for visual check
     plt.figure(figsize=(10, 10))
-    norm = LogNorm()  # Log normalization for better visibility
+    norm = ImageNormalize(data, interval=ZScaleInterval(), stretch=LinearStretch())  # Log normalization for better visibility
     plt.imshow(data, cmap='Greys', origin='lower', norm=norm, interpolation='nearest')
     plt.colorbar(label='Pixel Value')
     plt.title('FITS Image Data with Log Normalization')

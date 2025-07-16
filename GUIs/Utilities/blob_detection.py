@@ -42,7 +42,7 @@ def blob_detection(data,t, image,ZMAG,EXPTIME, aperture_radius=5):
     """
     min_radius=1.5
     data_float = data.astype(float)
-
+    print(t)
     data_normalized = exposure.rescale_intensity(data_float)
 
     blobs_log = blob_log(data_normalized, max_sigma=10, num_sigma=10, threshold=t)

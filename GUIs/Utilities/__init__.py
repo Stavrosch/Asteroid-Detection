@@ -6,7 +6,6 @@ from .Query_FOV_stars2 import Query_FOV_stars2
 from .Query_FOV_stars3 import Query_FOV_stars3
 from .deg_dms import dec_dms
 from .ra_hms import ra_hms
-#from .twirl_platesolver import plate_solve
 from .blob_detection import blob_detection 
 from .image_center import image_center
 from .ORB_EL_printer import ORB_EL_printer
@@ -22,3 +21,5 @@ from .get_observable2 import SelectableTreeView
 from. detector import detector
 from. plotaltaz import plot_asteroid_altaz_path
 from .altazupdate import update_live_altaz
+from .get_observable2 import SelectableTreeView
+from .tooltip import ToolTip

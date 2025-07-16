@@ -18,7 +18,6 @@ def Query_FOV_stars3(RA_deg, DEC_deg, width, height, query_length,NAXIS1, NAXIS2
         [NAXIS1, 0]      # Bottom-right
     ]
     
-    # Convert pixel coordinates to RA/Dec
     corners_sky = wcs.pixel_to_world_values(corners_pixels)
 
     polygon = "POLYGON('ICRS', " + ", ".join([f"{ra}, {dec}" for ra, dec in corners_sky]) + ")"    

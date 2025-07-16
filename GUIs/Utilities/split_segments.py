@@ -1,5 +1,4 @@
 def split_segments(data, max_gap=0.3):
-    """Split list of (time, altitude) into segments where time jumps are small."""
     segments = []
     current = [data[0]]
     for prev, curr in zip(data, data[1:]):
