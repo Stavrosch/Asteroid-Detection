@@ -18,7 +18,7 @@ def solve_plate(root, file_label, result_label, result_fail_label, progress_bar,
 
     progress_bar['maximum'] = len(file_paths)
     progress_bar['value'] = 0
-    ASTROMETRY_API_KEY = 'rdukoneutpiciaaa'
+    ASTROMETRY_API_KEY = 'APIKEY'
     ast = AstrometryNet()
     ast.api_key = ASTROMETRY_API_KEY
     for i, file_path in enumerate(file_paths):
