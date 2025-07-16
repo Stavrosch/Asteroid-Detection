@@ -1,4 +1,8 @@
-# Asteroid-Detection v1.0.0
+# Asteroid-Detection v1.1.0
+
+
+
+<img width="95" height="93" alt="logowithouttext" src="https://github.com/user-attachments/assets/825cffcd-fce7-455f-a4d6-33c92f8311d1" />
 
 Toolkit created as part of an MSc thesis on automatic asteroid detection. The repository contains a set of graphical utilities for analysing FITS images, tracking known asteroids and plate solving observations.
 ![Asteroid-Detection Demo](demo.gif) 
@@ -47,3 +51,4 @@ Launch the application by running inside the GUIs folder:
 ```
 python GUI_main.py
 ```
+<img width="515" height="365" alt="bkgr-1" src="https://github.com/user-attachments/assets/bfee776c-b765-4f84-a260-07974401bca4" />
