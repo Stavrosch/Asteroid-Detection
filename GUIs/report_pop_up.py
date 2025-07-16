@@ -2,9 +2,9 @@ import tkinter as tk
 from tkinter import messagebox
 from datetime import datetime, timedelta
 
-def format_mpc_report(RAs, Decs,date,m):
+def format_mpc_report(RAs, Decs,date,ms):
     mpc_text = ""
-    for i, (ra, dec) in enumerate(zip(RAs, Decs), start=1):
+    for i, (ra, dec,m) in enumerate(zip(RAs, Decs,ms), start=1):
         ra_formatted = " ".join(f"{abs(x):02.0f}" if i == 0 or i == 1 else f"{abs(x):05.3f}" for i, x in enumerate(ra))
         dec_formatted = " ".join(f"{abs(x):02.0f}" if i == 0 or i == 1 else f"{abs(x):05.2f}" for i, x in enumerate(dec))
         dec_sign = "-" if dec[0] < 0 else "+"
