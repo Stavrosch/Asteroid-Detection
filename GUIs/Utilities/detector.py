@@ -17,9 +17,11 @@ import report_pop_up as popup
 from astropy.visualization import ZScaleInterval,LogStretch,ImageNormalize,LinearStretch
 import re
 import time
+from tkinter import BooleanVar
 
 
-def detector(progs_bar,progs_lbl,progs_win,image_path,threshold,pltfrm):
+
+def detector(progs_bar,progs_lbl,progs_win,image_path,threshold,pltfrm,BG_COLOR,FG_COLOR,ACCENT_COLOR,HOVER_COLOR,tree,report_button,ax,fig,console):
         """
         Runs the asteroid detection pipeline on a given FITS image, updating a GUI with progress and results.
         This function performs the following steps:
@@ -45,6 +47,11 @@ def detector(progs_bar,progs_lbl,progs_win,image_path,threshold,pltfrm):
             - The function updates the GUI throughout the process to inform the user of progress.
             - Detected asteroid candidates are displayed and can be selected for reporting.
         """
+        def print_to_console(*args, **kwargs):
+            console.config(state='normal')
+            console.insert(tk.END, ' '.join(map(str, args)) + '\n')
+            console.config(state='disabled')
+            console.see(tk.END)
         start=time.time()
         progs_bar['value']=0
         progs_bar.update()
@@ -75,20 +82,30 @@ def detector(progs_bar,progs_lbl,progs_win,image_path,threshold,pltfrm):
         print(DATE)
         
 
-        print('DATE-OBS: ',DATE)
-        print('Right Ascension (hh:mm:ss): ',RA)
-        print('Declination (degrees: arcmin: arcsec): ',DEC)
+        print_to_console('DATE-OBS: ',DATE)
+        print_to_console('Right Ascension: ',RA)
+        print_to_console('Declination: ',DEC)
         print('CCD Length (pixels): ',NAXIS1)
         print('CCD Width (pixels): ',NAXIS2)
         print('Pixel Width : ',XPIXSZ)
-
+        #print(f"Loaded image data shape: {image_data.shape}")
 
         focal_length=620     #Focal length of Rasa11 CYPRUS
         w,h=ut.FOV_calc(NAXIS1,NAXIS2,XPIXSZ,YPIXSZ,focal_length)
         if isinstance(RA,str) and re.match(r"^\d{1,2} \d{1,2} \d{1,2}(\.\d+)?$",RA):
             RA=ut.RA_deg(RA)
             DEC=ut.Decl_deg(DEC)
+            
         
+        ax.clear()
+        norm = ImageNormalize(image_data, interval=ZScaleInterval(), stretch=LinearStretch())
+        ax.imshow(image_data, cmap='Greys', origin='lower', norm=norm)
+        ax.set_title("Loading image...", fontsize=16, color='white')
+        ax.tick_params(colors='white')
+        for spine in ax.spines.values():
+            spine.set_color('white')
+        fig.canvas.draw()
+            
         try:
             app_mag_hor=ut.get_apparent_mag(image_path)
         except Exception as e:
@@ -98,53 +115,17 @@ def detector(progs_bar,progs_lbl,progs_win,image_path,threshold,pltfrm):
         wcs=WCS(image.header)
         
         ra_c,dec_c=ut.image_center(NAXIS1,NAXIS2,wcs)
-        progs_lbl.config(text="Quering stars...")
-        progs_bar['value']=40
-        progs_bar.update()
-        
-        r=ut.Query_FOV_stars2(ra_c,dec_c,width=fov,height=fov)
-        rad=np.array(r['ra'])
-        ded=np.array(r['dec'])
-        rmag=np.array(r['phot_g_mean_mag'])
-        
-        progs_lbl.config(text="Running detection algorithm...")
-        progs_bar['value']=50
-        progs_bar.update()
-
-
-        rad_f=[]
-        ded_f=[]
-        rmag_f=[]
-        mag_max=18
-        for i in range(len(rmag)):
-            if rmag[i] < mag_max:
-                rad_f.append(rad[i])
-                ded_f.append(ded[i])
-                rmag_f.append(rmag[i])
-            
-
-        Xstar=[]
-        Ystar=[]
-        Mstar=[]
-        for ra1,dec1,mag in zip(rad_f,ded_f,rmag_f):
-            c=SkyCoord(ra1,dec1,frame='icrs',unit='deg')
-            x,y=wcs.world_to_pixel(c)
-            if x>0 and y>0 and x<NAXIS2 and y<NAXIS2:
-                Xstar.append(x)
-                Ystar.append(y)
-                Mstar.append(mag)
-
-        gaia_centroids=QTable([Xstar,Ystar],names=('xcentroid','ycentroid'))
-        mag_table=QTable([Xstar,Ystar,Mstar],names=('xcentroid','ycentroid','magnitude'))
-
-        gaia_centroids.sort('xcentroid')
 
         center1=SkyCoord(RA,DEC,frame='icrs',unit='deg')
         
-        data=image.data[0:NAXIS1,0:NAXIS2]  
+        data=image.data[0:NAXIS2,0:NAXIS1]  
         
         #Here we check f zero point is in the header
         #Otherwise we calculate it in the blob detection function
+        progs_lbl.config(text="Calculating Zero-point mag...")
+        progs_bar['value']=40
+        progs_bar.update()
+
         try:
             ZMAG=image.header['ZMAG']
         except KeyError:
@@ -152,7 +133,12 @@ def detector(progs_bar,progs_lbl,progs_win,image_path,threshold,pltfrm):
                 ZMAG=image.header['ZP']
             except KeyError:
                 ZMAG=0
-                print('Zero point not found in header, calculating it.')
+                print_to_console('Zero point not found in header, calculating it.')
+        
+        """Detecting sources in the image using blob detection and filtering."""
+        progs_lbl.config(text="Detecting sources...")
+        progs_bar['value']=50
+        progs_bar.update()
         detect_srcs=ut.blob_detection(data,threshold,image,ZMAG,EXPTIME)
         radi=detect_srcs['radius']
         mags=detect_srcs['magnitude']
@@ -173,7 +159,57 @@ def detector(progs_bar,progs_lbl,progs_win,image_path,threshold,pltfrm):
                     duplicate_indices.append(j)
 
         detect_srcs=detect_srcs[~np.in1d(range(len(detect_srcs)),duplicate_indices)]
+        query_length = len(detect_srcs)
+        ax.clear()
+        ax.imshow(image_data, cmap='Greys', origin='lower', norm=norm)
+        ax.scatter(detect_srcs['xcentroid'], detect_srcs['ycentroid'], 
+                s=1, color='red', label='Initial Detections')
+        ax.set_title(f"Initial Detections: {len(detect_srcs)} sources", fontsize=16, color='white')
+        ax.legend(title='Legend', loc='center left', bbox_to_anchor=(1, 0.5))
+        fig.canvas.draw()
+        
+        print_to_console(f"Number of stars detected: {len(detect_srcs)}")
+        """    Queries the Gaia catalog for stars within the field of view (FOV) centered at the given RA and DEC coordinates."""
+        r=ut.Query_FOV_stars3(ra_c,dec_c,width=w,height=h,query_length=query_length,NAXIS1=NAXIS1,NAXIS2=NAXIS2,wcs=wcs)
+        #r=ut.Query_FOV_stars2(ra_c,dec_c,width=w,height=h,query_length=query_length)
+        rad=np.array(r['ra'])
+        ded=np.array(r['dec'])
+        rmag=np.array(r['phot_g_mean_mag'])
     
+
+
+        # rad_f=[]
+        # ded_f=[]
+        # rmag_f=[]
+        # mag_max=35
+        # for i in range(len(rmag)):
+        #     if rmag[i] < mag_max:
+        #         rad_f.append(rad[i])
+        #         ded_f.append(ded[i])
+        #         rmag_f.append(rmag[i])
+
+        Xstar=[]
+        Ystar=[]
+        Mstar=[]
+        for ra1,dec1,mag in zip(rad,ded,rmag):
+            c=SkyCoord(ra1,dec1,frame='icrs',unit='deg')
+            x,y=wcs.world_to_pixel(c)
+            #if x>0 and y>0 and x<NAXIS2 and y<NAXIS2:
+            Xstar.append(x)
+            Ystar.append(y)
+            Mstar.append(mag)
+
+        gaia_centroids=QTable([Xstar,Ystar],names=('xcentroid','ycentroid'))
+        mag_table=QTable([Xstar,Ystar,Mstar],names=('xcentroid','ycentroid','magnitude'))
+        
+        ax.scatter(Xstar, Ystar, s=0.1, color='yellow', label='Gaia Stars')
+        ax.set_title(f"Gaia Stars: {len(Xstar)} stars", fontsize=16, color='white')
+        ax.legend(title='Legend', loc='center left', bbox_to_anchor=(1, 0.5))
+        fig.canvas.draw()
+        
+        gaia_centroids.sort('xcentroid')
+        print_to_console("The number of stars in the field is:",len(gaia_centroids))
+        """Query complete"""
 
         positions=np.transpose((detect_srcs['xcentroid'],detect_srcs['ycentroid']))
         apertures=CircularAperture(positions,r=6.0)
@@ -215,6 +251,12 @@ def detector(progs_bar,progs_lbl,progs_win,image_path,threshold,pltfrm):
         STARS=[]
         # for i in range(len(r)):
         #     print(P[i])
+        progs_lbl.config(text="Extracting potential sources...")
+        progs_bar['value']=90
+        progs_bar.update()
+        """    Filters out sources that match known stars from the Gaia catalog.
+        """
+        
         for i in range(len(r)):
             x=r['xcentroid'][i]
             y=r['ycentroid'][i]     
@@ -229,81 +271,97 @@ def detector(progs_bar,progs_lbl,progs_win,image_path,threshold,pltfrm):
         mask=[(row['xcentroid'],row['ycentroid']) not in strs_st for row in r]
         filtered_r=r[mask]
         print('Here are the sources',filtered_r['magnitude'])
-        print("Detection complete.")
+        print_to_console("Detection complete.")
         progs_bar['value']=100
         progs_bar.update()
 
-        progs_win.destroy()
         stop=time.time()
-        print(f"Time taken: {stop-start:.2f} seconds")
+        print_to_console(f"Time taken: {stop-start:.2f} seconds")
         print(f"Apparent Magnitude: {app_mag_hor}")
+        print(len(Xstar))
+        # for widget in pltfrm.winfo_children():
+        #     widget.destroy()
+        ax.clear()
 
-        for widget in pltfrm.winfo_children():
-            widget.destroy()
+        # fig=Figure(figsize=(5,5),dpi=100,facecolor='#2b2b2b')
+        # ax=fig.add_subplot(111)
 
-        fig=Figure(figsize=(5,5),dpi=100)
-        ax=fig.add_subplot(111)
-
-        plt.subplots_adjust(right=0.75)  
+        # plt.subplots_adjust(right=0.75)  
 
         norm=ImageNormalize(data,interval=ZScaleInterval(),stretch=LinearStretch())
+        ax.set_title("Asteroid Detection",fontsize=16)
         ax.imshow(data,cmap='Greys',origin='lower',norm=norm)
-        ax.scatter(Xstar,Ystar,s=1,color='yellow',label='Stars')
-        ax.scatter(P['xcentroid'],P['ycentroid'],s=50,color='green',marker='x',label='Possible Asteroids')
-        ax.scatter(filtered_r['xcentroid'],filtered_r['ycentroid'],s=50,color='magenta',marker='+',label='Asteroids filtered')
+        ax.scatter(Xstar,Ystar,s=0.1,color='yellow',label='Stars')
+        ax.tick_params(colors='white')  # Tick labels and ticks
+        ax.xaxis.label.set_color('white')
+        ax.yaxis.label.set_color('white')
+        ax.title.set_color('white')
+        for spine in ax.spines.values():
+            spine.set_color('white')
+        #ax.scatter(P['xcentroid'],P['ycentroid'],s=50,color='green',marker='x',label='Possible Asteroids')
+        ax.scatter(filtered_r['xcentroid'],filtered_r['ycentroid'],s=50,color='green',marker='+',label='Possible Asteroids')
+        for i, (x, y) in enumerate(zip(filtered_r['xcentroid'], filtered_r['ycentroid']), start=1):
+            ax.text(x + 5, y + 5, str(i), color='green', fontsize=10, weight='bold')
         ax.scatter([],[],color='red',label='Apertures')
         ax.text(10,10,f'FOV: {w:.2f} x {h:.2f} deg',color='red',fontsize=12,bbox=dict(facecolor='white',alpha=0.8))
         apertures1.plot(ax=ax,color='red',lw=1.5,alpha=0.5)
 
         ax.legend(title='Legend',loc='center left',bbox_to_anchor=(1,0.5),borderaxespad=0.)
 
-        canvas=FigureCanvasTkAgg(fig,master=pltfrm)
-        canvas.draw()
+        fig.canvas.draw()
 
-        canvas.get_tk_widget().pack(fill=tk.BOTH,expand=True)
+        # toolbar = NavigationToolbar2Tk(canvas, pltfrm)
+        # toolbar.update()
 
-        toolbar=NavigationToolbar2Tk(canvas,pltfrm)
-        toolbar.update()
-        toolbar.pack(side=tk.TOP,fill=tk.X)
+        # toolbar.config(background=BG_COLOR)
+        # toolbar._message_label.config(background=BG_COLOR, foreground=FG_COLOR)
+
+        # for button in toolbar.winfo_children():
+        #     if isinstance(button, tk.Button):
+        #         button.config(bg=ACCENT_COLOR, fg=FG_COLOR, 
+        #                     activebackground=HOVER_COLOR,
+        #                     relief=tk.FLAT)
+        # toolbar.pack(side=tk.TOP,fill=tk.X)
         
         pltfrm.pack_propagate(False)
         
-        coordfrm=tk.Frame(pltfrm)
-        coordfrm.pack(side=tk.LEFT,fill=tk.BOTH,expand=False)
-        
-        check_vars=[]
+        # coordfrm=tk.Frame(pltfrm)
+        # coordfrm.pack(side=tk.LEFT,fill=tk.BOTH,expand=False)
+        tree.delete(*tree.get_children())
         for i in range(len(filtered_r)):
-            x=filtered_r['xcentroid'][i]
-            y=filtered_r['ycentroid'][i]
-            coord_text=f"Asteroid {i+1}: X={x:.2f},Y={y:.2f}"
-            check_var=tk.IntVar() 
-            check_vars.append(check_var)
-            coordfrm_row=tk.Frame(coordfrm)
-            coordfrm_row.pack(anchor='w')
-            coord_label=tk.Label(coordfrm_row,text=coord_text)
-            coord_label.pack(side=tk.LEFT)
-            checkbox=tk.Checkbutton(coordfrm_row,variable=check_var)
-            checkbox.pack(side=tk.RIGHT)
+            x = filtered_r['xcentroid'][i]
+            y = filtered_r['ycentroid'][i]
+            m = filtered_r['magnitude'][i]
+            coord = wcs.pixel_to_world(x, y)
+            ra = ut.ra_hms(coord.ra.deg)
+            dec = ut.dec_dms(coord.dec.deg)
+            tree.insert(parent='', index='end', iid=i, values=(f"{x}", f"{y}", f"{m:.2f}",f"{ra}", f"{dec}"))
+
+
+
+
+        report_button.config(command=lambda: generate_report())
+        progs_win.destroy()
+
+
         
-        
-        button_frame=tk.Frame(pltfrm)
-        button_frame.pack(side=tk.RIGHT,fill=tk.Y,padx=5)   
-      
-        report_button=tk.Button(button_frame,text="Report",command=lambda: generate_report(check_vars))
-        report_button.pack(pady=10)
-        
-        def generate_report(check_vars):
-            detRAs=[]
-            setDecs=[]
-            for i,check_var in enumerate(check_vars):
-                if check_var.get() == 1:
-                   
-                    x=filtered_r['xcentroid'][i]
-                    y=filtered_r['ycentroid'][i]
-                    m=filtered_r['magnitude'][i]
-                    coord=wcs.pixel_to_world(x,y)
-                    ra=ut.ra_hms(coord.ra.deg)
-                    dec=ut.dec_dms(coord.dec.deg)
-                    detRAs.append(ra)
-                    setDecs.append(dec)
-            popup.show_report_window(detRAs,setDecs,DATE,m)
+        def generate_report():
+            selected = tree.get_checked_items()
+            detRAs = []
+            setDecs = []
+            ms = []
+            for iid in selected:
+                i = int(iid)
+                x = filtered_r['xcentroid'][i]
+                y = filtered_r['ycentroid'][i]
+                m = filtered_r['magnitude'][i]
+                coord = wcs.pixel_to_world(x, y)
+                ra = ut.ra_hms(coord.ra.deg)
+                dec = ut.dec_dms(coord.dec.deg)
+                detRAs.append(ra)
+                setDecs.append(dec)
+                ms.append(m)
+            if detRAs:
+                popup.show_report_window(detRAs, setDecs, DATE, ms)
+                
+
