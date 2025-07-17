@@ -4,12 +4,12 @@
 # Ignore __pycache__ directories
 __pycache__/
 
-# Bsp files
+# BSP files
 *.bsp
 
-# Avoid picked files
+# Ignore pickle files
 *.pkl
 
-# Ignore dat files  //TODO: Rename files to .dat 
+# Ignore dat files  # TODO: Rename files to .dat 
 *.dat
 *.DAT 
