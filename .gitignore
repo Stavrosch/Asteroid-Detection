@@ -13,7 +13,7 @@ __pycache__/
 # Ignore dat files  # TODO: Rename files to .dat 
 *.dat
 *.DAT
-*.dat.gz 
+*.dat.gz
 
 # Ignore .env files
 .env
