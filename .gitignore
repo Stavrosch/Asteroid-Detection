@@ -1,0 +1,15 @@
+# Avoid the following files and directories
+# This file is used to specify intentionally untracked files that Git should ignore.
+
+# Ignore __pycache__ directories
+__pycache__/
+
+# BSP files
+*.bsp
+
+# Ignore pickle files
+*.pkl
+
+# Ignore dat files  # TODO: Rename files to .dat 
+*.dat
+*.DAT 
