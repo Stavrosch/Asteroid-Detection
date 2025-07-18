@@ -12,7 +12,8 @@ __pycache__/
 
 # Ignore dat files  # TODO: Rename files to .dat 
 *.dat
-*.DAT 
+*.DAT
+*.dat.gz 
 
-#Ignore this file as it contains sensitive information
-GUIs/Utilities/ps_API.py
+# Ignore .env files
+.env
