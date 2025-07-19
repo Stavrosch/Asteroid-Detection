@@ -72,6 +72,7 @@ def create_window(root):
     ephemeris_window = tk.Toplevel(root)
     ephemeris_window.title("Asteroid Tools")
     ephemeris_window.geometry("1000x600")
+    ephemeris_window.resizable(False, False)
 
     notebook = ttk.Notebook(ephemeris_window)
     notebook.place(x=0, y=145, relwidth=1, relheight=1)

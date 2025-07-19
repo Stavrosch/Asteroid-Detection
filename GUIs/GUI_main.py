@@ -9,7 +9,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 logo_path = os.path.join(BASE_DIR, 'logowithouttext.png')
 long_logo_path = os.path.join(BASE_DIR, 'logo_long.png')
 background_path = os.path.join(BASE_DIR, 'bkgr-1.png') 
-
+font=("TkFixedFont", 12)
 
 def open_window_asteroid():
     asteroid_detection_window.create_window(basikoparathiro)
@@ -23,6 +23,7 @@ def open_platesolverwindow():
 basikoparathiro = tk.Tk()
 basikoparathiro.title("Asteroid Detector")
 basikoparathiro.geometry("450x350")
+basikoparathiro.resizable(False, False)
 
 
 bg_image = Image.open(background_path)
@@ -54,7 +55,7 @@ button2 = tk.Button(basikoparathiro, text="Plate Solve", command=open_platesolve
                 bg="#4f1ed6", fg="white", font=("fixedsys", 12), relief=tk.FLAT, borderwidth=3)
 button2.place(relx=0.5, rely=0.50, anchor="center", width=150, height=30)
 
-button3 = tk.Button(basikoparathiro, text="Asteroid Detection", command=open_window_asteroid, 
+button3 = tk.Button(basikoparathiro, text="Detection", command=open_window_asteroid, 
                 bg="#4f1ed6", fg="white", font=("fixedsys", 12), relief=tk.FLAT, borderwidth=3)
 button3.place(relx=0.5, rely=0.65, anchor="center", width=150, height=30)
 

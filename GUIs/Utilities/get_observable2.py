@@ -9,12 +9,15 @@ from PIL import Image, ImageTk
 class SelectableTreeView(ttk.Treeview):
     def __init__(self, master=None, **kwargs):
         ttk.Treeview.__init__(self, master, **kwargs)
-
+        img_size = (20, 20)
         checked_b64 = '''iVBORw0KGgoAAAANSUhEUgAAABYAAAAXCAYAAAAP6L+eAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAACxEAAAsRAX9kX5EAAAI0SURBVEhLrZVPTxNRFEfPe1Ps/wFaBytVCqV2QGgR41YWxsSFiStNiCa6UWOAD+HSnQtSogs3gisSF34Lg4kFEjKNpITEGCVIoSEYSmfGRVMybSkkpWd55+Zk7v29vCfeff9qf9veomxZtIMOKZmIRBH6p/f2j+Iulm3X97SEIgTjYQ3ZTimAadtkd7aR7ZRWKVsWsr7YClf8AaK+QE3t3OJYQGVaTzOlp+j1+o/r5xL3+YNM6SmeDg7xoC9OxNcGcTyoMjOU5klcp2SafN5c59fB/vH3lsSJYCfTDunHvEEmt8rvfwfHPTXiqC+A5vE6Sw3Egyozw2NM9icpWxYLGzkyuVW2HFKc4ojXx6vkKC+ujaK5PTVNVWIBlemhNI9iCcqWxXw+x5yx0iDFKR4IqDyMJXieHOGlnuKyI2EcQU32Jzk0TRbyOWaN5ZrxnSjcv/sawKMohNwebnRr3AxrKEKwtrfDQblMPKgypVd2emSazOcNMrkV/jSR4hQXSocYxQLdbjfXu0KMdWvYgInNs8QwjwcqQVWkq6dKcYoBdksljL0C/o4ORrtCjIc1BtVO7vXGKjttEtRJNBy3jf0ib9eyLG6u41VcTPREzwzqJGr+uErxqIRRLKC5vYQueFjcXGfWWD5zfCeCuTdNr7dEsJM7kat8+Zlvmn4zThULwCUlRy28Lg07dmJDS1IAKYWor50bl5DIka4QShvlLiG5dbEH8SG7ZC/93Wp55HrcUnL7UpT/edTeairZ+1kAAAAASUVORK5CYII='''
         unchecked_b64 = '''iVBORw0KGgoAAAANSUhEUgAAABYAAAAWCAYAAADEtGw7AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAACxEAAAsRAX9kX5EAAACcSURBVEhL7dSxDYQgFIDhH4XG4Cq0jMIKNCbu4hROwCC0djYugV51Lzm7UxsTvoQGXn66p6ZpOpZlYd93ntC2Lc45miejAKUUcs6oYRgOgBgj1trz3F/WdWWeZwCa76W1lr7vb52u6+QTCT+thkUNixoWNSzeF5ZFH0L42adXbNtGSgkANY7jUUo5z9xijKFxzqG1Pr9dZozBe88Hi78t3eij8ZUAAAAASUVORK5CYII='''
-
-        checked_img = Image.open(BytesIO(base64.b64decode(checked_b64))).resize((23,23), Image.ANTIALIAS)
-        unchecked_img = Image.open(BytesIO(base64.b64decode(unchecked_b64))).resize((23,23), Image.ANTIALIAS)
+        checked_img = Image.open(BytesIO(base64.b64decode(checked_b64)))
+        unchecked_img = Image.open(BytesIO(base64.b64decode(unchecked_b64)))
+        
+        # Resize with proper filter
+        checked_img = checked_img.resize(img_size, Image.Resampling.LANCZOS)
+        unchecked_img = unchecked_img.resize(img_size, Image.Resampling.LANCZOS)
         self.checked_img = ImageTk.PhotoImage(checked_img)
         self.unchecked_img = ImageTk.PhotoImage(unchecked_img)
 

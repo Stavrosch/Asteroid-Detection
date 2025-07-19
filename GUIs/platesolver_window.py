@@ -99,6 +99,8 @@ def create_window(root):
     plate_solver_window = tk.Toplevel(root)
     plate_solver_window.title("Plate Solver")
     plate_solver_window.geometry("400x270")
+    plate_solver_window.resizable(False, False)
+
 
     file_label = tk.Label(plate_solver_window, text="No files selected", fg="red")
     file_label.place(x=150, y=10)
