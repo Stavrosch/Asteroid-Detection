@@ -35,7 +35,15 @@ Toolkit created as part of an MSc thesis on automatic asteroid detection. The re
 
      - Online (Astrometry.net API):
          - Get an API key from https://nova.astrometry.net/api_help
-         - Add it to GUIs/Utilities/ps_API.py (line 23).
+         - Add the API key to your code by going to GUIs/Utilities/ps_API.py (line 24) and editing it.
+       
+              Replacing this :
+                       
+                load_dotenv()
+                ASTROMETRY_API_KEY = os.getenv('API_KEY')
+              with :
+                
+                ASTROMETRY_API_KEY = 'your_api_key_here'
 
      - Local (WSL):
          - Follow astrometry.net’s build guide.
