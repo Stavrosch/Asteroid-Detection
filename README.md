@@ -12,6 +12,7 @@ Toolkit created as part of an MSc thesis on automatic asteroid detection. The re
 - **Python**: version 3.11 or later is recommended.
   
 - **Windows** & **WSL** (WSL needeed to run astrometry.net locally, for online Plate Solving, not needed)
+- **Linux not supported yet..**
   
 - **Dependencies** (installable with `pip`):
   `astropy`, `astroquery`, `pandas`, `skyfield`, `matplotlib`, `customtkinter`,
