@@ -22,7 +22,7 @@ def solve_plate(root, file_label, result_label, result_fail_label, progress_bar,
     progress_bar['value'] = 0
     load_dotenv()
     ASTROMETRY_API_KEY = os.getenv('API_KEY')
-    print(f"Using Astrometry.net API key: {ASTROMETRY_API_KEY}")
+
     ast = AstrometryNet()
     ast.api_key = ASTROMETRY_API_KEY
     for i, file_path in enumerate(file_paths):
