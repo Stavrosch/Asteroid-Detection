@@ -17,3 +17,6 @@ __pycache__/
 
 # Ignore .env files
 .env
+
+# Ignore .astropy folder
+.astropy
