@@ -20,3 +20,6 @@ __pycache__/
 
 # Ignore .astropy folder
 .astropy
+
+# Ignore python environments
+.venv
