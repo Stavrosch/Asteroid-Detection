@@ -213,8 +213,8 @@ def create_window(root):
         t1=times[0]
         t1 = t1.utc_strftime('%Y-%m-%d %H:%M')
         ra_array, dec_array, _ = apparent.radec()
-        ra_scalar = Angle(degrees=ra_array.degrees[0])
-        dec_scalar = Angle(degrees=dec_array.degrees[0])
+        ra_scalar = Angle(degrees=ra_array._degrees[0])
+        dec_scalar = Angle(degrees=dec_array._degrees[0])
         #print(type(ra_scalar), type(dec_scalar))
         ephem_table.insert("", tk.END, values=(
             f"{row['designation_packed']}",
