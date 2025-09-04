@@ -137,7 +137,7 @@ def create_window(parent):
     
     # Main plot frame
     pltfrm = tk.Frame(winast, bg=ACCENT_COLOR)
-    pltfrm.place(relx=0.02, rely=0.25, relwidth=0.98, relheight=0.55)
+    pltfrm.place(relx=0.02, rely=0.23, relwidth=0.98, relheight=0.55)
     
     content_frame = tk.Frame(pltfrm, bg=BG_COLOR)
     content_frame.place(relx=0.5, rely=0.5, relwidth=0.98, relheight=0.98, anchor='center')
@@ -160,27 +160,26 @@ def create_window(parent):
     toolbar.config(background=BG_COLOR)
     toolbar._message_label.config(background=BG_COLOR, foreground=FG_COLOR)
     
-    report_button = tk.Button(control_frame, text="Report", 
-                            bg=ACCENT_COLOR, fg=FG_COLOR,
-                            activebackground=HOVER_COLOR,
-                            relief=tk.FLAT,
-                            state=tk.NORMAL)
-    report_button.place(relx=0.95, rely=0.5, anchor='e', width=80)
-    
     canvas.get_tk_widget().place(relx=0.5, rely=0.45, relwidth=0.98, relheight=0.9, anchor='center')
     
     result_frame = tk.Frame(winast, bg=BG_COLOR)
-    result_frame.place(relx=0.02, rely=0.83, relwidth=0.45, relheight=0.15)
+    result_frame.place(relx=0.02, rely=0.80, relwidth=0.45, relheight=0.2)
     
     tree_frame = tk.Frame(result_frame, bg=BG_COLOR)
     tree_frame.place(relx=0.5, rely=0.5, relwidth=0.98, relheight=0.98, anchor='center')
     
     tree_scroll = tk.Scrollbar(tree_frame)
-    tree_scroll.place(relx=0.98, rely=0.5, relheight=0.95, anchor='e')
+    tree_scroll.place(relx=0.98, rely=0.3, relheight=0.75, anchor='e')
     
     tree = ut.SelectableTreeView(tree_frame, yscrollcommand=tree_scroll.set, selectmode="none")
-    tree.place(relx=0, rely=0, relwidth=0.95, relheight=1)
+    tree.place(relx=0, rely=0, relwidth=0.95, relheight=.75)
     tree_scroll.config(command=tree.yview)
+    report_button = tk.Button(tree_frame, text="Report", 
+                            bg=ACCENT_COLOR, fg=FG_COLOR,
+                            activebackground=HOVER_COLOR,
+                            relief=tk.FLAT,
+                            state=tk.NORMAL)
+    report_button.place(relx=0.95, rely=0.90, anchor='e', width=80)
     
     tree['columns'] = ("X", "Y", "Mag", "RA", "Dec")
     tree.column("#0", width=60)  
@@ -199,7 +198,7 @@ def create_window(parent):
     print(f"Window created in {time.time() - start_time:.2f} seconds")
     
     console_frame = tk.Frame(winast, bg=BG_COLOR)
-    console_frame.place(relx=0.5, rely=0.83, relwidth=0.48, relheight=0.15)
+    console_frame.place(relx=0.5, rely=0.80, relwidth=0.48, relheight=0.17)
 
     console = tk.Text(console_frame, bg=BG_COLOR, fg=FG_COLOR, 
                     font=('Consolas', 10), state='disabled')
