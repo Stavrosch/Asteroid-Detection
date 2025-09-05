@@ -140,7 +140,7 @@ def create_window(root):
     scale_entry.place(x=320, y=80)
     
     var = tk.IntVar()
-    header_update = tk.Checkbutton(plate_solver_window,text="Overwrite?",variable=var,onvalue=1,offvalue=0)
+    header_update = tk.Checkbutton(plate_solver_window,text="Make Copy?",variable=var,onvalue=1,offvalue=0)
     header_update.place(x=50, y=80)
 
     solve_button = tk.Button(

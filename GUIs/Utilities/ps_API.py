@@ -9,6 +9,8 @@ from astropy.coordinates import Angle
 import astropy.units as u
 from dotenv import load_dotenv
 import os
+import shutil
+
 
 def solve_plate(root, file_label, result_label, result_fail_label, progress_bar,var, file_paths):
     if not file_paths:
@@ -79,30 +81,40 @@ def solve_plate(root, file_label, result_label, result_fail_label, progress_bar,
                     root.update_idletasks()
                     check = var.get()
                     #print(wcs_header)
-                    if check==1:
-                        with fits.open(file_path, mode='update') as hdul:
-                                current_header = hdul[0].header
-                                 # Safely remove all HISTORY/COMMENT entries (even if none exist)
-                                current_header.remove("HISTORY", ignore_missing=True, remove_all=True)
-                                current_header.remove("COMMENT", ignore_missing=True, remove_all=True)
+                    while True:
+                        if check==1:
+                            with fits.open(file_path, mode='update') as hdul:
+                                    print("Updating WCS header...",file_path)
+                                    current_header = hdul[0].header
+                                    # Safely remove all HISTORY/COMMENT entries (even if none exist)
+                                    current_header.remove("HISTORY", ignore_missing=True, remove_all=True)
+                                    current_header.remove("COMMENT", ignore_missing=True, remove_all=True)
 
-                                current_header.update(wcs_header)
+                                    current_header.update(wcs_header)
+                                    hdul.flush()
+                                    file.close()
+                            with fits.open(file_path, mode='update') as hdul:
+                                
+                                header = hdul[0].header                           
+                                #print(subid)
+                                status_url = f"http://nova.astrometry.net/api/submissions/{subid}"
+                                response = requests.get(status_url)
+                                data = response.json()
+                                jobid = data.get("jobs", [])
+                                #print(jobid[0])
+                                residuals = residual_calc(hdu,jobid[0])
+                                #print(residuals)
+                                header['COMMENT'] = f"Residuals: {residuals} calculated by ADA."
                                 hdul.flush()
-                                file.close()
-                        with fits.open(file_path, mode='update') as hdul:
-                            
-                            header = hdul[0].header                           
-                            print(subid)
-                            status_url = f"http://nova.astrometry.net/api/submissions/{subid}"
-                            response = requests.get(status_url)
-                            data = response.json()
-                            jobid = data.get("jobs", [])
-                            print(jobid[0])
-                            residuals = residual_calc(hdu,jobid[0])
-                            #print(residuals)
-                            header['COMMENT'] = f"Residuals: {residuals} calculated by ADA."
-                            hdul.flush()
-
+                                print("hello")
+                            break
+                        else:
+                                copy_path = file_path.replace('.fits', '_copy.fits')
+                                shutil.copy2(file_path, copy_path)
+                                print(f"Backup created: {copy_path}")
+                                check=1
+                                file_path=copy_path
+                                continue
 
                     result_label.config(text=f"Plate solving complete for image {i+1}/{len(file_paths)}.")
                     root.update_idletasks()
