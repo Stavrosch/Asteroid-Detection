@@ -190,17 +190,65 @@ def create_window(root):
         #print(f"End time: {end_time.utc_strftime('%Y-%m-%d %H:%M')}")
         times = ts.linspace(start_time, end_time, 100)
         #print(f"Times: {times[0]}")
-
+        print(designation)
         print(asteroids_df.head())
+        
         match = asteroids_df[asteroids_df['designation_packed'] == num]
 
         if match.empty:
-            try:
-                match = asteroids_df[asteroids_df['designation'] == designation]
-            except Exception as e:
-                print(f"No match found for {num} in MPCORB")
-                ephem_table.insert("", tk.END, values=[f"No match: {num}"] + ["-"] * (len(columns) - 1))
-                return
+                full_designation = designation_entry.get().strip()
+    
+                # Handle different designation formats
+                parts = full_designation.split()
+                
+                # Common asteroid designation patterns:
+                # 1. Numbered asteroids: "433 Eros", "1 Ceres"
+                # 2. Provisional designations: "2023 AB", "1997 QK1"
+                # 3. Packed designations: "K07A00A", "J95X01A"
+                # 4. Mixed: "793578 (2004 MP3)"
+                
+                # Try multiple matching strategies
+                match = None
+                
+                # Strategy 1: Exact match with full designation
+                match = asteroids_df[asteroids_df['designation'] == full_designation]
+    
+                if match.empty:
+                    # Strategy 2: Check packed designation format
+                    # Handle cases like "793578 (2004 MP3)" - extract the packed part
+                    if '(' in full_designation and ')' in full_designation:
+                        packed_part = full_designation.split('(')[1].split(')')[0].strip()
+                        match = asteroids_df[asteroids_df['designation_packed'] == packed_part]
+                
+                if match.empty and len(parts) > 0:
+                    # Strategy 3: Try with first part only (e.g., "793578" from "793578 (2004 MP3)")
+                    first_part = parts[0]
+                    match = asteroids_df[asteroids_df['designation'] == first_part]
+                    
+                if match.empty:
+                        # Strategy 4: Try packed format with first part
+                        match = asteroids_df[asteroids_df['designation_packed'] == first_part]
+                
+                if match.empty and len(parts) > 1:
+                    # Strategy 5: Try with second part (e.g., "2004 MP3" from "793578 (2004 MP3)")
+                    second_part = ' '.join(parts[1:])
+                    match = asteroids_df[asteroids_df['designation'] == second_part]
+                
+                if match.empty:
+                    # Strategy 6: Case-insensitive partial matching
+                    match = asteroids_df[asteroids_df['designation'].str.contains(full_designation, case=False, na=False)]
+                
+                if match.empty:
+                    # Final strategy: Try all parts individually
+                    for part in parts:
+                        match = asteroids_df[asteroids_df['designation'].str.contains(part, case=False, na=False)]
+                        if not match.empty:
+                            break
+        
+                if match.empty:
+                    print(f"No match found for '{full_designation}' in MPCORB")
+                    ephem_table.insert("", tk.END, values=[f"No match: {full_designation}"] + ["-"] * (len(columns) - 1))
+                    return
         row = match.iloc[0]
         name = row['designation']
         #print(asteroids_df.columns)
