@@ -8,6 +8,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolb
 from matplotlib.figure import Figure
 from PIL import Image, ImageTk
 import os
+from tkinter import StringVar
 
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -33,7 +34,7 @@ def configure_styles():
                     lightcolor=ACCENT_COLOR,
                     darkcolor=ACCENT_COLOR)
 
-def show_progress_and_run(parent_window, pltfrm, image_path, threshold, tree, report_button, ax, fig,console):
+def show_progress_and_run(parent_window, pltfrm, image_path, threshold, tree, report_button, ax, fig,console, format_dropdown):
     progs_win = tk.Toplevel(parent_window)
     progs_win.title("Processing...")
     progs_win.geometry("300x100")
@@ -52,7 +53,7 @@ def show_progress_and_run(parent_window, pltfrm, image_path, threshold, tree, re
                               style="TProgressbar")
     progs_bar.place(relx=0.5, rely=0.6, anchor='center')
     
-    ut.detector(progs_bar, progs_lbl, progs_win, image_path, threshold, pltfrm, BG_COLOR, FG_COLOR, ACCENT_COLOR, HOVER_COLOR, tree, report_button,ax,fig,console)
+    ut.detector(progs_bar, progs_lbl, progs_win, image_path, threshold, pltfrm, BG_COLOR, FG_COLOR, ACCENT_COLOR, HOVER_COLOR, tree, report_button,ax,fig,console, format_dropdown)
 
 def choose_file(window, threshold, pltfrm):
     global filepth
@@ -132,7 +133,7 @@ def create_window(parent):
         font=('Segoe UI', 10, 'bold'),
         cursor="hand2",
         state=tk.DISABLED,
-        command=lambda: show_progress_and_run(winast, pltfrm, filepth, magsldr.get(), tree, report_button,ax,fig,console))
+        command=lambda: show_progress_and_run(winast, pltfrm, filepth, magsldr.get(), tree, report_button,ax,fig,console, format_dropdown))
     start.place(relx=0.5, rely=0.2, anchor='center', width=120, height=30)
     
     # Main plot frame
@@ -179,8 +180,21 @@ def create_window(parent):
                             activebackground=HOVER_COLOR,
                             relief=tk.FLAT,
                             state=tk.NORMAL)
-    report_button.place(relx=0.95, rely=0.90, anchor='e', width=80)
+    report_button.place(relx=0.95, rely=0.87, anchor='e', width=80)
     
+    format_var = tk.StringVar(value="80-column")
+    # format_frame = tk.Frame(tree_frame, bg=BG_COLOR)
+    # format_frame.place(relx=0.75, rely=0.87, anchor='e', width=120)
+
+    # format_label = tk.Label(tree_frame, text="Report Format:", 
+    #                     bg=BG_COLOR, fg=FG_COLOR, font=('Segoe UI', 8))
+    # format_label.place(relx=0.45, rely=0.87, anchor='e', width=120)
+
+    format_dropdown = ttk.Combobox(tree_frame, textvariable=format_var, 
+                                values=["80-column", "ADES"], 
+                                state="readonly", width=8)
+    format_dropdown.place(relx=0.55, rely=0.87, anchor='e', width=120)
+
     tree['columns'] = ("X", "Y", "Mag", "RA", "Dec")
     tree.column("#0", width=60)  
     tree.column("X", anchor=tk.CENTER, width=50)

@@ -21,7 +21,7 @@ from tkinter import BooleanVar
 
 
 
-def detector(progs_bar,progs_lbl,progs_win,image_path,threshold,pltfrm,BG_COLOR,FG_COLOR,ACCENT_COLOR,HOVER_COLOR,tree,report_button,ax,fig,console):
+def detector(progs_bar,progs_lbl,progs_win,image_path,threshold,pltfrm,BG_COLOR,FG_COLOR,ACCENT_COLOR,HOVER_COLOR,tree,report_button,ax,fig,console,format_dropdown):
         """
         Runs the asteroid detection pipeline on a given FITS image, updating a GUI with progress and results.
         This function performs the following steps:
@@ -340,12 +340,16 @@ def detector(progs_bar,progs_lbl,progs_win,image_path,threshold,pltfrm,BG_COLOR,
 
 
 
-        report_button.config(command=lambda: generate_report())
+        
         progs_win.destroy()
+
+        report_button.config(command=lambda: generate_report())
 
 
         
-        def generate_report():
+        def generate_report(format_var=format_dropdown.get()):
+            format_var=format_dropdown.get()
+            print(f"Selected format: {format_var}")
             selected = tree.get_checked_items()
             detRAs = []
             setDecs = []
@@ -356,12 +360,17 @@ def detector(progs_bar,progs_lbl,progs_win,image_path,threshold,pltfrm,BG_COLOR,
                 y = filtered_r['ycentroid'][i]
                 m = filtered_r['magnitude'][i]
                 coord = wcs.pixel_to_world(x, y)
-                ra = ut.ra_hms(coord.ra.deg)
-                dec = ut.dec_dms(coord.dec.deg)
+                print(coord.ra.deg)
+                if format_var == "80-column":  
+                    ra = ut.ra_hms(coord.ra.deg)
+                    dec = ut.dec_dms(coord.dec.deg)
+                else:
+                    ra = coord.ra.deg
+                    dec = coord.dec.deg
                 detRAs.append(ra)
                 setDecs.append(dec)
                 ms.append(m)
             if detRAs:
-                popup.show_report_window(detRAs, setDecs, DATE, ms)
+                popup.show_report_window(detRAs, setDecs, DATE, ms,format_var)
                 
 

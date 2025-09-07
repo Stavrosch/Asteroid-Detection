@@ -24,9 +24,9 @@ from datetime import timedelta, datetime, timezone
 import tkinter.font as tkFont  # Add at the top
 from Utilities import SelectableTreeView
 from PIL import Image, ImageTk
-import os  
+import os
 from pathlib import Path
-# TO DO 
+# TO DO
 # LOAD TWILIGHT DATA
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -136,7 +136,7 @@ def create_window(root):
     ax.set_title("Altitude Path")
     ax.grid(True)
     fig.tight_layout()
-    
+
     duration_slider = tk.Scale(tab_ephemeris, from_=1, to=24, resolution=1, orient=tk.HORIZONTAL)
     duration_slider.place(x=670, y=320)
     duration_slider.set(10)
@@ -155,19 +155,22 @@ def create_window(root):
     tk.Label(tab_ephemeris, text="Azimuth:").place(x=10, y=100)
     tk.Label(tab_ephemeris, textvariable=az_var).place(x=80, y=100)
 
-    altaz_job = {"id": None} 
+    altaz_job = {"id": None}
     def refresh():
         for row in ephem_table.get_children():
-            ephem_table.delete(row)        
+            ephem_table.delete(row)
         designation = designation_entry.get().strip()
+
         number_to_find = designation
         num=number_to_find
         for i in range(5-len(number_to_find)):
             num='0'+num
-        result=ut.find_number_in_file(file_name, num)
-        if result is None:
-            ephem_table.insert("", tk.END, values=[f"Not in MPCORB: {designation}"] + [""] * (len(columns) - 1))
-            return
+        # result=ut.find_number_in_file(file_name, num)
+        # print('Here result',result) #CHECK THE ERROR HERE
+        # if result is None:
+        #         print(f"Designation {designation} not found in MPCORB")
+        #         ephem_table.insert("", tk.END, values=[f"Not in MPCORB: {designation}"] + [""] * (len(columns) - 1))
+        #         return
 
         lat = float(lat_entry.get())
         lon = float(lon_entry.get())
@@ -187,17 +190,67 @@ def create_window(root):
         #print(f"End time: {end_time.utc_strftime('%Y-%m-%d %H:%M')}")
         times = ts.linspace(start_time, end_time, 100)
         #print(f"Times: {times[0]}")
+        print(designation)
+        print(asteroids_df.head())
         
-        #print(asteroids_df.head())
         match = asteroids_df[asteroids_df['designation_packed'] == num]
 
         if match.empty:
-            print(f"No match found for {num} in MPCORB")
-            ephem_table.insert("", tk.END, values=[f"No match: {num}"] + ["-"] * (len(columns) - 1))
-            return
+                full_designation = designation_entry.get().strip()
+    
+                # Handle different designation formats
+                parts = full_designation.split()
+                
+                # Common asteroid designation patterns:
+                # 1. Numbered asteroids: "433 Eros", "1 Ceres"
+                # 2. Provisional designations: "2023 AB", "1997 QK1"
+                # 3. Packed designations: "K07A00A", "J95X01A"
+                # 4. Mixed: "793578 (2004 MP3)"
+                
+                # Try multiple matching strategies
+                match = None
+                
+                # Strategy 1: Exact match with full designation
+                match = asteroids_df[asteroids_df['designation'] == full_designation]
+    
+                if match.empty:
+                    # Strategy 2: Check packed designation format
+                    # Handle cases like "793578 (2004 MP3)" - extract the packed part
+                    if '(' in full_designation and ')' in full_designation:
+                        packed_part = full_designation.split('(')[1].split(')')[0].strip()
+                        match = asteroids_df[asteroids_df['designation_packed'] == packed_part]
+                
+                if match.empty and len(parts) > 0:
+                    # Strategy 3: Try with first part only (e.g., "793578" from "793578 (2004 MP3)")
+                    first_part = parts[0]
+                    match = asteroids_df[asteroids_df['designation'] == first_part]
+                    
+                if match.empty:
+                        # Strategy 4: Try packed format with first part
+                        match = asteroids_df[asteroids_df['designation_packed'] == first_part]
+                
+                if match.empty and len(parts) > 1:
+                    # Strategy 5: Try with second part (e.g., "2004 MP3" from "793578 (2004 MP3)")
+                    second_part = ' '.join(parts[1:])
+                    match = asteroids_df[asteroids_df['designation'] == second_part]
+                
+                if match.empty:
+                    # Strategy 6: Case-insensitive partial matching
+                    match = asteroids_df[asteroids_df['designation'].str.contains(full_designation, case=False, na=False)]
+                
+                if match.empty:
+                    # Final strategy: Try all parts individually
+                    for part in parts:
+                        match = asteroids_df[asteroids_df['designation'].str.contains(part, case=False, na=False)]
+                        if not match.empty:
+                            break
+        
+                if match.empty:
+                    print(f"No match found for '{full_designation}' in MPCORB")
+                    ephem_table.insert("", tk.END, values=[f"No match: {full_designation}"] + ["-"] * (len(columns) - 1))
+                    return
         row = match.iloc[0]
         name = row['designation']
-        #print(f"Row data: {row}")
         #print(asteroids_df.columns)
         minor_planet = sun + mpc.mpcorb_orbit(row, ts, GM_SUN)
         orbit = mpc.mpcorb_orbit(row, ts, GM_SUN)
@@ -251,7 +304,7 @@ def create_window(root):
 
     ttk.Button(tab_ephemeris, text="Get Tracking Information", command=orbital_printer).place(x=10, y=250, width=140)
     ttk.Button(tab_ephemeris, text="Copy", command=copy_to_clipboard).place(x=150, y=250, width=60)
-    
+
     def add_selected_to_list(selected_data, filtered_headers):
         selected_listbox.delete(0, tk.END)
         name_idx = filtered_headers.index("Name") if "Name" in filtered_headers else 0
@@ -268,25 +321,25 @@ def create_window(root):
         min_mag = None
         max_mag = None
         object_type = None
-        
+
         if angle_entry.get() != '':
             angle = float(angle_entry.get())
         if min_mag_entry.get() != '':
             min_mag = float(min_mag_entry.get())
-        if max_mag_entry.get() != '':  
+        if max_mag_entry.get() != '':
             max_mag = float(max_mag_entry.get())
         if object_type_var.get() != "all objects":
             object_type = object_type_var.get()
-        
-        ut.get_observable_objects(lat, lon, height, obs_time, angle, min_mag, max_mag, object_type,on_select_callback=add_selected_to_list, parent_frame=tab_neos,tree_widget=observable_tree)            
-            
+
+        ut.get_observable_objects(lat, lon, height, obs_time, angle, min_mag, max_mag, object_type,on_select_callback=add_selected_to_list, parent_frame=tab_neos,tree_widget=observable_tree)
+
     angle_entry = tk.Entry(tab_neos)
     angle_entry.place(x=105, y=10, width=30)
     tk.Label(tab_neos, text="Elevation(deg) :").place(x=10, y=10)
     angle_entry.insert(0, "30")
     angle_entry.config(state="normal")
 
-    
+
     tk.Label(tab_neos, text="V Mag:").place(x=10, y=40)
     min_mag_entry = tk.Entry(tab_neos)
     min_mag_entry.place(x=70, y=40, width=30)
@@ -296,7 +349,7 @@ def create_window(root):
     max_mag_entry = tk.Entry(tab_neos)
     max_mag_entry.place(x=120, y=40, width=30)
     max_mag_entry.insert(0, "18")
-    
+
     tk.Label(tab_neos, text="Object Type:").place(x=10, y=70)
     object_type_var = tk.StringVar(value="NEO")
     object_type_menu = ttk.Combobox(
@@ -309,18 +362,18 @@ def create_window(root):
     ttk.Button(tab_neos, text="Get Observable Asteroids", command=get_neos).place(x=10, y=105, width=200)
     selected_listbox = tk.Listbox(tab_neos, height=10, width=50)
     selected_listbox.place(x=800, y=50,width=180, height=300)
-    
+
     tk.Label(tab_neos, text="Observable Asteroids",font=title_font).place(x=220, y=15)
     observable_tree = SelectableTreeView(tab_neos, show="tree headings", height=10)
     observable_tree.place(x=220, y=50, width=500, height=300)
 
     observable_tree["columns"] = ["Full Name","Rise time","Transit time", "Set time", "Vmag", "Helio Range au"]
-    
+
     observable_tree.heading("#0", text="Select")
     observable_tree.column("#0", width=50, stretch=False, anchor="center")
     observable_tree.heading("#1", text="Full Name")
     observable_tree.column("#1", width=50, anchor="center")
-    for col in observable_tree["columns"]: 
+    for col in observable_tree["columns"]:
         observable_tree.heading(col, text=col)
         observable_tree.column(col, width=30, anchor="center")
 
@@ -329,7 +382,10 @@ def create_window(root):
         if selection:
             index = selection[0]
             selected_name = event.widget.get(index)
-            selected_name = selected_name.split(" ")[0] 
+            if selected_name.startswith('(') and selected_name.endswith(')'):
+                        selected_name =  selected_name.strip('()')
+            else:
+                selected_name  = selected_name.split(" ")[0]
             designation_entry.delete(0, tk.END)
             designation_entry.insert(0, selected_name)
 
@@ -337,12 +393,12 @@ def create_window(root):
 
     tk.Label(tab_ephemeris,text="Altitude:").place(x=10, y=80)
     tk.Label(tab_ephemeris, text="Azimuth").place(x=10, y=100)
-    
+
     telescope_comms = tk.Text(tab_ephemeris, wrap="word")
     telescope_comms.place(x=10, y=140, width=250, height=70)
     telescope_comms.insert("1.0", "Telescope Comms will apear here")
-    
-    
+
+
     def remove_selected():
         selected_indices = selected_listbox.curselection()
         for index in reversed(selected_indices):  # Reverse so we don't mess up indices when deleting
@@ -360,7 +416,7 @@ def create_window(root):
         #for jd, ra, dec in points:
             #pwi4.mount_radecpath_add_point(jd, ra, dec)
         #pwi4.mount_radecpath_apply()
-        
+
     ttk.Button(tab_ephemeris, text="GO TO", command=goto).place(x=180,y=80)
 
     def on_location_change():
