@@ -27,6 +27,8 @@ Steps:
 2. Install required dependencies.
 3. Download and process data files.
 
+
+------------------------------------------------------
 Please enter your choice of environment:
 - venv
 - conda
@@ -37,7 +39,11 @@ echo "You chose: $env_choice"
 
 if [ "$env_choice" = "venv" ]; then
     python3 -m venv .venv 
-    source .venv/bin/activate
+    if [ "$platform" = "wsl" ]; then
+        source .venv/Scripts/activate
+    else 
+        source .venv/bin/activate
+    fi
     pip install -r requirements.txt
 
 elif [ "$env_choice" = "conda" ]; then
@@ -62,7 +68,7 @@ else
     exit 1
 fi
 
-echo "✅ Environment setup complete.\n"
+echo -e "✅ Environment setup complete. \n"
 
 # -----------------------------
 # Step 2: Set up API key for Astrometry.net
@@ -102,8 +108,9 @@ else
 
     echo "ASTROMETRY_API_KEY=$API_KEY" >> "$ENV_FILE"
 
-    echo "✅ Done. Your .env file now contains the API key."
-    echo "   You can load it in Python with dotenv.\n"
+    echo -e "✅ Done   \
+             Your .env file now contains the API key. \
+             You can load it in Python with dotenv.\n"
 fi  
 
 # -----------------------------
@@ -112,9 +119,8 @@ fi
 DATA_DIR="GUIs/Utilities"
 mkdir -p "$DATA_DIR"
 
-echo " Downloading data files..."
-echo "  1. MPCORB.DAT"
-echo "  2. astorb.dat"
+MAX_ATTEMPTS=4
+ATTEMPT=0
 
 download_file () {
     url=$1
@@ -128,17 +134,45 @@ download_file () {
     fi
 }
 
-download_file http://minorplanetcenter.net/iau/MPCORB/MPCORB.DAT.gz
-download_file https://ftp.lowell.edu/pub/elgb/astorb.dat.gz
+while [ $ATTEMPT -lt $MAX_ATTEMPTS ]; do
 
-echo " Decompressing data files..."
-gunzip MPCORB.DAT.gz
-gunzip astorb.dat.gz
+    echo "------------------------------------------------------"
+    echo " Downloading data files..."
+    echo "  1. MPCORB.DAT"
+    echo "  2. astorb.dat"
 
-mv MPCORB.DAT "$DATA_DIR/"
-mv astorb.dat "$DATA_DIR/"
 
-echo " Processing data files..."
-python GUIs/Utilities/pickler.py
 
+    download_file http://minorplanetcenter.net/iau/MPCORB/MPCORB.DAT.gz
+    download_file https://ftp.lowell.edu/pub/elgb/astorb.dat.gz
+
+    if [ -f "MPCORB.DAT.gz" ] && [ -f "astorb.dat.gz" ]; then
+        echo " Decompressing data files..."
+        gunzip MPCORB.DAT.gz
+        gunzip astorb.dat.gz
+
+        mv MPCORB.DAT "$DATA_DIR/"
+        mv astorb.dat "$DATA_DIR/"
+
+        echo " Processing data files..."
+        python GUIs/Utilities/pickler.py
+
+        echo " The data files have been downloaded and processed successfully."
+        break
+    else 
+        ATTEMPT=$((ATTEMPT + 1))
+        if [ $ATTEMPT -lt $MAX_ATTEMPTS ]; then
+            echo "❌ Download failed. Retrying... ($ATTEMPT/$MAX_ATTEMPTS) \n"
+        else
+            echo "❌ Download failed $MAX_ATTEMPTS times. Please download the files manually:"
+            echo "  1. MPCORB.DAT: http://minorplanetcenter.net/iau/MPCORB/MPCORB.DAT.gz"
+            echo "  2. astorb.dat: https://ftp.lowell.edu/pub/elgb/astorb.dat.gz"
+            echo "Place them in the current directory and press Enter to continue..."
+            read -p "Press Enter to continue..." dummy
+
+            echo " Transfer data files to $DATA_DIR and process them manually..."
+        fi
+    fi
+done
+            
 echo "✅ Setup complete."
