@@ -1,0 +1,23 @@
+# Ignore local env and config
+.env
+*.env
+
+# Ignore downloaded data (we’ll handle it in Dockerfile)
+GUIs/Utilities/MPCORB.DAT
+GUIs/Utilities/astorb.dat
+GUIs/Utilities/*.pkl
+#de421.bsp
+
+# Ignore unnecessary files
+__pycache__/
+*.pyc
+*.pyo
+*.swp
+*.tmp
+.git
+.gitignore
+.astropy
+.venv
+.vscode
+.github
+Dockerfile

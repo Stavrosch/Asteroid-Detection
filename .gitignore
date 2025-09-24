@@ -23,3 +23,7 @@ __pycache__/
 
 # Ignore python environments
 .venv
+.pyc
+
+# Ignore editor files
+.vscode
