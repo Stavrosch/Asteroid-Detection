@@ -11,7 +11,6 @@ import Utilities as ut
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import matplotlib.pyplot as plt
 from astropy.coordinates import SkyCoord, AltAz
-import customtkinter
 from skyfield.api import load, Topos
 from skyfield.data import mpc
 from skyfield.constants import GM_SUN_Pitjeva_2005_km3_s2 as GM_SUN
@@ -454,9 +453,4 @@ def create_window(root):
             altaz_job["id"] = ephemeris_window.after(3000, update)
         update()
 
-if __name__ == "__main__":
-    root = customtkinter.CTk()
-    root.title("Main Application")
-    root.geometry("300x100")
-    customtkinter.CTkButton(root, text="Open Ephemeris", command=lambda: create_window(root)).pack(padx=20, pady=20)
-    root.mainloop()
+

@@ -1,6 +1,5 @@
 astropy
 astroquery
-customtkinter
 Pillow
 matplotlib
 numpy
@@ -9,5 +8,4 @@ photutils
 requests
 scikit-image
 skyfield
-twirl
 python-dotenv
