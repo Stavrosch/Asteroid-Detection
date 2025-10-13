@@ -1,16 +1,3 @@
-<<<<<<< HEAD
-astropy
-astroquery
-Pillow
-matplotlib
-numpy
-pandas
-photutils
-requests
-scikit-image
-skyfield
-python-dotenv
-=======
 astropy==5.1.1
 astroquery==0.4.7
 Pillow==10.4.0
@@ -22,4 +9,3 @@ requests==2.32.3
 scikit-image==0.21.0
 skyfield==1.49
 python-dotenv==1.0.1
->>>>>>> ae8a82a9d1144663f0b342a8591225537bd9d16d
