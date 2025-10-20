@@ -302,7 +302,7 @@ def detector(progs_bar,progs_lbl,progs_win,image_path,threshold,pltfrm,BG_COLOR,
         ax.scatter(filtered_r['xcentroid'],filtered_r['ycentroid'],s=50,color='green',marker='+',label='Possible Asteroids')
         for i, (x, y) in enumerate(zip(filtered_r['xcentroid'], filtered_r['ycentroid']), start=1):
             ax.text(x + 5, y + 5, str(i), color='green', fontsize=10, weight='bold')
-        ax.scatter([],[],color='red',label='Apertures')
+        ax.scatter([],[],color='red',label='Sources')
         ax.text(10,10,f'FOV: {w:.2f} x {h:.2f} deg',color='red',fontsize=12,bbox=dict(facecolor='white',alpha=0.8))
         apertures1.plot(ax=ax,color='red',lw=1.5,alpha=0.5)
 
