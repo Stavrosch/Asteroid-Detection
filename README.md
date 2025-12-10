@@ -15,7 +15,7 @@ Toolkit created as part of an MSc thesis on automatic asteroid detection. The re
 - **Linux not supported yet..**
   
 - **Dependencies** (installable with `pip`):
-  `astropy`, `astroquery`, `pandas`, `skyfield`, `matplotlib`, `customtkinter`,
+  `astropy`, `astroquery`, `pandas`, `skyfield`, `matplotlib`,
   `Pillow`, `requests` and optionally `pwi4_client` for telescope control.
   
 - **Plate Solving**
@@ -29,7 +29,7 @@ Toolkit created as part of an MSc thesis on automatic asteroid detection. The re
   - Clone the repository
   - Install dependencies
         
-        pip install -r requirements.txt  # (if you have a requirements file)
+        pip install -r requirements.txt
 
   - Set up plate-solving:
 

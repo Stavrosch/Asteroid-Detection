@@ -32,6 +32,17 @@ def Query_FOV_stars3(RA_deg, DEC_deg, width, height, query_length,NAXIS1, NAXIS2
     ORDER BY {mag_column} ASC
     """
     
+    # query = f"""
+    # SELECT TOP {10 * query_length} *
+    # FROM gaiaedr3.gaia_source
+    # WHERE 1=CONTAINS(
+    #     POINT('ICRS', ra, dec),
+    #     {polygon}
+    # )
+    # AND {mag_column} < {mag_limit}
+    # ORDER BY {mag_column} ASC
+    # """
+    
     
     try:
         job = Gaia.launch_job_async(query)
