@@ -25,11 +25,12 @@ from Utilities import SelectableTreeView
 from PIL import Image, ImageTk
 import os
 from pathlib import Path
+
 # TO DO
 # LOAD TWILIGHT DATA
 
 BASE_DIR = Path(__file__).resolve().parent
-DATA_DIR = BASE_DIR / "Utilities"
+DATA_DIR = BASE_DIR.parent / "data"
 
 file_name = DATA_DIR / "mpcorb_df.pkl"
 eph_path = DATA_DIR / "de421.bsp"
@@ -38,10 +39,11 @@ file_name = os.path.join(DATA_DIR, "mpcorb_df.pkl")
 eph_path = os.path.join(DATA_DIR, "de421.bsp")
 
 asteroids_df = pd.read_pickle(file_name)
-eph = load('de421.bsp')
+eph = load("de421.bsp")
 
-sun, earth = eph['sun'], eph['earth']
+sun, earth = eph["sun"], eph["earth"]
 ts = load.timescale()
+
 
 def load_icon(path, size=(20, 20)):
     img = Image.open(path).resize(size, Image.Resampling.LANCZOS)
@@ -79,8 +81,8 @@ def create_window(root):
     tab_neos = tk.Frame(notebook)
     tab_ephemeris = tk.Frame(notebook)
 
-    notebook.add(tab_neos, text='Whats Observable?')
-    notebook.add(tab_ephemeris, text='Track Asteroid')
+    notebook.add(tab_neos, text="Whats Observable?")
+    notebook.add(tab_ephemeris, text="Track Asteroid")
 
     designation_entry = tk.Entry(ephemeris_window)
     designation_entry.place(x=130, y=10, width=50)
@@ -88,12 +90,22 @@ def create_window(root):
     tk.Label(ephemeris_window, text="Asteroid Designation:").place(x=10, y=10)
 
     location_var = tk.StringVar(value="AUTH-3")
-    location_combobox = ttk.Combobox(ephemeris_window, textvariable=location_var, values=["AUTH-3", "AUTH-1", "AUTH-2", "Custom"], state="readonly")
+    location_combobox = ttk.Combobox(
+        ephemeris_window,
+        textvariable=location_var,
+        values=["AUTH-3", "AUTH-1", "AUTH-2", "Custom"],
+        state="readonly",
+    )
     location_combobox.place(x=100, y=40, width=80)
     tk.Label(ephemeris_window, text="Select Location:").place(x=10, y=40)
 
     mount_var = tk.StringVar(value="PlaneWave4")
-    mount_combobox = ttk.Combobox(ephemeris_window, textvariable=mount_var, values=["PlaneWave4", "10Micron"], state="readonly")
+    mount_combobox = ttk.Combobox(
+        ephemeris_window,
+        textvariable=mount_var,
+        values=["PlaneWave4", "10Micron"],
+        state="readonly",
+    )
     mount_combobox.place(x=270, y=40, width=100)
     tk.Label(ephemeris_window, text="Select Mount:").place(x=190, y=40)
     lat_entry = tk.Entry(ephemeris_window)
@@ -116,13 +128,29 @@ def create_window(root):
     time_entry.insert(0, datetime.now().isoformat())
     tk.Label(ephemeris_window, text="Time:").place(x=10, y=100)
 
-    tk.Button(ephemeris_window, text="Set to Now", command=lambda: time_entry.delete(0, tk.END) or time_entry.insert(0, datetime.now().isoformat())).place(x=235, y=97, width=80)
+    tk.Button(
+        ephemeris_window,
+        text="Set to Now",
+        command=lambda: time_entry.delete(0, tk.END)
+        or time_entry.insert(0, datetime.now().isoformat()),
+    ).place(x=235, y=97, width=80)
 
-    columns = ("Designation","RA", "Dec", "Mag", "Distance km", "au", "daily motion", "rms arcsec")
-    ephem_table = ttk.Treeview(tab_ephemeris, columns=columns, show='headings', height=1)
+    columns = (
+        "Designation",
+        "RA",
+        "Dec",
+        "Mag",
+        "Distance km",
+        "au",
+        "daily motion",
+        "rms arcsec",
+    )
+    ephem_table = ttk.Treeview(
+        tab_ephemeris, columns=columns, show="headings", height=1
+    )
     for col in columns:
         ephem_table.heading(col, text=col)
-        ephem_table.column(col, width=90, anchor='center')
+        ephem_table.column(col, width=90, anchor="center")
     ephem_table.place(x=10, y=10)
 
     graph_frame = tk.Frame(tab_ephemeris)
@@ -130,13 +158,15 @@ def create_window(root):
     fig, ax = plt.subplots(figsize=(7.5, 3), dpi=80)
     ax.set_xlabel("Time hours from now)")
     ax.set_ylim(0, 90)
-    ax.set_xlim(0,10)
+    ax.set_xlim(0, 10)
     ax.set_ylabel("Altitude (deg)")
     ax.set_title("Altitude Path")
     ax.grid(True)
     fig.tight_layout()
 
-    duration_slider = tk.Scale(tab_ephemeris, from_=1, to=24, resolution=1, orient=tk.HORIZONTAL)
+    duration_slider = tk.Scale(
+        tab_ephemeris, from_=1, to=24, resolution=1, orient=tk.HORIZONTAL
+    )
     duration_slider.place(x=670, y=320)
     duration_slider.set(10)
     canvas = FigureCanvasTkAgg(fig, master=graph_frame)
@@ -155,15 +185,16 @@ def create_window(root):
     tk.Label(tab_ephemeris, textvariable=az_var).place(x=80, y=100)
 
     altaz_job = {"id": None}
+
     def refresh():
         for row in ephem_table.get_children():
             ephem_table.delete(row)
         designation = designation_entry.get().strip()
 
         number_to_find = designation
-        num=number_to_find
-        for i in range(5-len(number_to_find)):
-            num='0'+num
+        num = number_to_find
+        for i in range(5 - len(number_to_find)):
+            num = "0" + num
         # result=ut.find_number_in_file(file_name, num)
         # print('Here result',result) #CHECK THE ERROR HERE
         # if result is None:
@@ -174,83 +205,102 @@ def create_window(root):
         lat = float(lat_entry.get())
         lon = float(lon_entry.get())
         height = float(height_entry.get())
-        location = Topos(latitude_degrees=lat, longitude_degrees=lon, elevation_m=height)
+        location = Topos(
+            latitude_degrees=lat, longitude_degrees=lon, elevation_m=height
+        )
         observer = earth + location
         time_str = time_entry.get().strip()
         dt = datetime.fromisoformat(time_str)
         dt = dt.astimezone().astimezone(timezone.utc)
-        #dt = datetime.now().astimezone().astimezone(timezone.utc)
+        # dt = datetime.now().astimezone().astimezone(timezone.utc)
 
-        #dt = ts.now()
+        # dt = ts.now()
         duration_hr = duration_slider.get()
         start_time = ts.from_datetime(dt)
-        print(f"Start time: {start_time.utc_strftime('%Y-%m-%d %H:%M')}, Duration: {duration_hr} hours")
+        print(
+            f"Start time: {start_time.utc_strftime('%Y-%m-%d %H:%M')}, Duration: {duration_hr} hours"
+        )
         end_time = ts.from_datetime(dt + timedelta(hours=duration_hr))
-        #print(f"End time: {end_time.utc_strftime('%Y-%m-%d %H:%M')}")
+        # print(f"End time: {end_time.utc_strftime('%Y-%m-%d %H:%M')}")
         times = ts.linspace(start_time, end_time, 100)
-        #print(f"Times: {times[0]}")
+        # print(f"Times: {times[0]}")
         print(designation)
         print(asteroids_df.head())
-        
-        match = asteroids_df[asteroids_df['designation_packed'] == num]
+
+        match = asteroids_df[asteroids_df["designation_packed"] == num]
 
         if match.empty:
-                full_designation = designation_entry.get().strip()
-    
-                # Handle different designation formats
-                parts = full_designation.split()
-                
-                # Common asteroid designation patterns:
-                # 1. Numbered asteroids: "433 Eros", "1 Ceres"
-                # 2. Provisional designations: "2023 AB", "1997 QK1"
-                # 3. Packed designations: "K07A00A", "J95X01A"
-                # 4. Mixed: "793578 (2004 MP3)"
-                
-                # Try multiple matching strategies
-                match = None
-                
-                # Strategy 1: Exact match with full designation
-                match = asteroids_df[asteroids_df['designation'] == full_designation]
-    
-                if match.empty:
-                    # Strategy 2: Check packed designation format
-                    # Handle cases like "793578 (2004 MP3)" - extract the packed part
-                    if '(' in full_designation and ')' in full_designation:
-                        packed_part = full_designation.split('(')[1].split(')')[0].strip()
-                        match = asteroids_df[asteroids_df['designation_packed'] == packed_part]
-                
-                if match.empty and len(parts) > 0:
-                    # Strategy 3: Try with first part only (e.g., "793578" from "793578 (2004 MP3)")
-                    first_part = parts[0]
-                    match = asteroids_df[asteroids_df['designation'] == first_part]
-                    
-                if match.empty:
-                        # Strategy 4: Try packed format with first part
-                        match = asteroids_df[asteroids_df['designation_packed'] == first_part]
-                
-                if match.empty and len(parts) > 1:
-                    # Strategy 5: Try with second part (e.g., "2004 MP3" from "793578 (2004 MP3)")
-                    second_part = ' '.join(parts[1:])
-                    match = asteroids_df[asteroids_df['designation'] == second_part]
-                
-                if match.empty:
-                    # Strategy 6: Case-insensitive partial matching
-                    match = asteroids_df[asteroids_df['designation'].str.contains(full_designation, case=False, na=False)]
-                
-                if match.empty:
-                    # Final strategy: Try all parts individually
-                    for part in parts:
-                        match = asteroids_df[asteroids_df['designation'].str.contains(part, case=False, na=False)]
-                        if not match.empty:
-                            break
-        
-                if match.empty:
-                    print(f"No match found for '{full_designation}' in MPCORB")
-                    ephem_table.insert("", tk.END, values=[f"No match: {full_designation}"] + ["-"] * (len(columns) - 1))
-                    return
+            full_designation = designation_entry.get().strip()
+
+            # Handle different designation formats
+            parts = full_designation.split()
+
+            # Common asteroid designation patterns:
+            # 1. Numbered asteroids: "433 Eros", "1 Ceres"
+            # 2. Provisional designations: "2023 AB", "1997 QK1"
+            # 3. Packed designations: "K07A00A", "J95X01A"
+            # 4. Mixed: "793578 (2004 MP3)"
+
+            # Try multiple matching strategies
+            match = None
+
+            # Strategy 1: Exact match with full designation
+            match = asteroids_df[asteroids_df["designation"] == full_designation]
+
+            if match.empty:
+                # Strategy 2: Check packed designation format
+                # Handle cases like "793578 (2004 MP3)" - extract the packed part
+                if "(" in full_designation and ")" in full_designation:
+                    packed_part = full_designation.split("(")[1].split(")")[0].strip()
+                    match = asteroids_df[
+                        asteroids_df["designation_packed"] == packed_part
+                    ]
+
+            if match.empty and len(parts) > 0:
+                # Strategy 3: Try with first part only (e.g., "793578" from "793578 (2004 MP3)")
+                first_part = parts[0]
+                match = asteroids_df[asteroids_df["designation"] == first_part]
+
+            if match.empty:
+                # Strategy 4: Try packed format with first part
+                match = asteroids_df[asteroids_df["designation_packed"] == first_part]
+
+            if match.empty and len(parts) > 1:
+                # Strategy 5: Try with second part (e.g., "2004 MP3" from "793578 (2004 MP3)")
+                second_part = " ".join(parts[1:])
+                match = asteroids_df[asteroids_df["designation"] == second_part]
+
+            if match.empty:
+                # Strategy 6: Case-insensitive partial matching
+                match = asteroids_df[
+                    asteroids_df["designation"].str.contains(
+                        full_designation, case=False, na=False
+                    )
+                ]
+
+            if match.empty:
+                # Final strategy: Try all parts individually
+                for part in parts:
+                    match = asteroids_df[
+                        asteroids_df["designation"].str.contains(
+                            part, case=False, na=False
+                        )
+                    ]
+                    if not match.empty:
+                        break
+
+            if match.empty:
+                print(f"No match found for '{full_designation}' in MPCORB")
+                ephem_table.insert(
+                    "",
+                    tk.END,
+                    values=[f"No match: {full_designation}"]
+                    + ["-"] * (len(columns) - 1),
+                )
+                return
         row = match.iloc[0]
-        name = row['designation']
-        #print(asteroids_df.columns)
+        name = row["designation"]
+        # print(asteroids_df.columns)
         minor_planet = sun + mpc.mpcorb_orbit(row, ts, GM_SUN)
         orbit = mpc.mpcorb_orbit(row, ts, GM_SUN)
 
@@ -260,35 +310,42 @@ def create_window(root):
         alt_list = alt.degrees
         az_list = az.degrees
         time_list = [(t - start_time) * 24 for t in times]
-        #print(f"Time list: {time_list}")
+        # print(f"Time list: {time_list}")
 
-        t1=times[0]
-        t1 = t1.utc_strftime('%Y-%m-%d %H:%M')
+        t1 = times[0]
+        t1 = t1.utc_strftime("%Y-%m-%d %H:%M")
         ra_array, dec_array, _ = apparent.radec()
         ra_scalar = Angle(degrees=ra_array._degrees[0])
         dec_scalar = Angle(degrees=dec_array._degrees[0])
-        #print(type(ra_scalar), type(dec_scalar))
-        ephem_table.insert("", tk.END, values=(
-            f"{row['designation_packed']}",
-            ra_scalar.hstr(warn=False),
-            dec_scalar.dstr(),
-            f"{row['magnitude_H']:.2f}",
-            f"{distance.km[0] / 1.496e+8:.3f} au",
-            f"{row['semimajor_axis_au']:.3f}",
-            f"{row['mean_daily_motion_degrees']:.2f}",
-            f"{row['rms_residual_arcseconds']:.2f}"
-        ))
+        # print(type(ra_scalar), type(dec_scalar))
+        ephem_table.insert(
+            "",
+            tk.END,
+            values=(
+                f"{row['designation_packed']}",
+                ra_scalar.hstr(warn=False),
+                dec_scalar.dstr(),
+                f"{row['magnitude_H']:.2f}",
+                f"{distance.km[0] / 1.496e+8:.3f} au",
+                f"{row['semimajor_axis_au']:.3f}",
+                f"{row['mean_daily_motion_degrees']:.2f}",
+                f"{row['rms_residual_arcseconds']:.2f}",
+            ),
+        )
 
-        ut.plot_asteroid_altaz_path(canvas,ax,alt_list, time_list,name)
+        ut.plot_asteroid_altaz_path(canvas, ax, alt_list, time_list, name)
         if altaz_job["id"] is not None:
             ephemeris_window.after_cancel(altaz_job["id"])
-        update_live_altaz(minor_planet, observer, alt_var, az_var, ephemeris_window,dt)
+        update_live_altaz(minor_planet, observer, alt_var, az_var, ephemeris_window, dt)
 
-    ttk.Button(tab_ephemeris, text="Refresh", command=refresh).place(x=750, y=10, width=50)
+    ttk.Button(tab_ephemeris, text="Refresh", command=refresh).place(
+        x=750, y=10, width=50
+    )
 
     orbital_elements = tk.Text(tab_ephemeris, wrap="word")
     orbital_elements.place(x=10, y=300, width=250, height=120)
     orbital_elements.insert("1.0", "Orbital Elements will appear here")
+
     def orbital_printer():
         orb = ut.ORB_EL_printer(mount_var.get(), designation_entry.get())
         orbital_elements.delete("1.0", tk.END)
@@ -297,19 +354,22 @@ def create_window(root):
     def copy_to_clipboard():
         orb_text = orbital_elements.get("1.0", tk.END).strip()
         if orb_text:
-                ephemeris_window.clipboard_clear()
-                ephemeris_window.clipboard_append(orb_text.split(":", 1)[-1].strip())
-                ephemeris_window.update()
+            ephemeris_window.clipboard_clear()
+            ephemeris_window.clipboard_append(orb_text.split(":", 1)[-1].strip())
+            ephemeris_window.update()
 
-    ttk.Button(tab_ephemeris, text="Get Tracking Information", command=orbital_printer).place(x=10, y=250, width=140)
-    ttk.Button(tab_ephemeris, text="Copy", command=copy_to_clipboard).place(x=150, y=250, width=60)
+    ttk.Button(
+        tab_ephemeris, text="Get Tracking Information", command=orbital_printer
+    ).place(x=10, y=250, width=140)
+    ttk.Button(tab_ephemeris, text="Copy", command=copy_to_clipboard).place(
+        x=150, y=250, width=60
+    )
 
     def add_selected_to_list(selected_data, filtered_headers):
         selected_listbox.delete(0, tk.END)
         name_idx = filtered_headers.index("Name") if "Name" in filtered_headers else 0
         for row in selected_data:
             selected_listbox.insert(tk.END, row[name_idx])
-
 
     def get_neos():
         lat = lat_entry.get()
@@ -321,23 +381,34 @@ def create_window(root):
         max_mag = None
         object_type = None
 
-        if angle_entry.get() != '':
+        if angle_entry.get() != "":
             angle = float(angle_entry.get())
-        if min_mag_entry.get() != '':
+        if min_mag_entry.get() != "":
             min_mag = float(min_mag_entry.get())
-        if max_mag_entry.get() != '':
+        if max_mag_entry.get() != "":
             max_mag = float(max_mag_entry.get())
         if object_type_var.get() != "all objects":
             object_type = object_type_var.get()
 
-        ut.get_observable_objects(lat, lon, height, obs_time, angle, min_mag, max_mag, object_type,on_select_callback=add_selected_to_list, parent_frame=tab_neos,tree_widget=observable_tree)
+        ut.get_observable_objects(
+            lat,
+            lon,
+            height,
+            obs_time,
+            angle,
+            min_mag,
+            max_mag,
+            object_type,
+            on_select_callback=add_selected_to_list,
+            parent_frame=tab_neos,
+            tree_widget=observable_tree,
+        )
 
     angle_entry = tk.Entry(tab_neos)
     angle_entry.place(x=105, y=10, width=30)
     tk.Label(tab_neos, text="Elevation(deg) :").place(x=10, y=10)
     angle_entry.insert(0, "30")
     angle_entry.config(state="normal")
-
 
     tk.Label(tab_neos, text="V Mag:").place(x=10, y=40)
     min_mag_entry = tk.Entry(tab_neos)
@@ -352,21 +423,32 @@ def create_window(root):
     tk.Label(tab_neos, text="Object Type:").place(x=10, y=70)
     object_type_var = tk.StringVar(value="NEO")
     object_type_menu = ttk.Combobox(
-        tab_neos, textvariable=object_type_var,
-        values=["all objects", "PHA", "NEO"], state="readonly"
+        tab_neos,
+        textvariable=object_type_var,
+        values=["all objects", "PHA", "NEO"],
+        state="readonly",
     )
     object_type_menu.place(x=100, y=70, width=100)
     title_font = tkFont.Font(family="Helvetica", size=12, weight="bold")
-    tk.Label(tab_neos, text="Selected Asteroids",font=title_font).place(x=800, y=15)
-    ttk.Button(tab_neos, text="Get Observable Asteroids", command=get_neos).place(x=10, y=105, width=200)
+    tk.Label(tab_neos, text="Selected Asteroids", font=title_font).place(x=800, y=15)
+    ttk.Button(tab_neos, text="Get Observable Asteroids", command=get_neos).place(
+        x=10, y=105, width=200
+    )
     selected_listbox = tk.Listbox(tab_neos, height=10, width=50)
-    selected_listbox.place(x=800, y=50,width=180, height=300)
+    selected_listbox.place(x=800, y=50, width=180, height=300)
 
-    tk.Label(tab_neos, text="Observable Asteroids",font=title_font).place(x=220, y=15)
+    tk.Label(tab_neos, text="Observable Asteroids", font=title_font).place(x=220, y=15)
     observable_tree = SelectableTreeView(tab_neos, show="tree headings", height=10)
     observable_tree.place(x=220, y=50, width=500, height=300)
 
-    observable_tree["columns"] = ["Full Name","Rise time","Transit time", "Set time", "Vmag", "Helio Range au"]
+    observable_tree["columns"] = [
+        "Full Name",
+        "Rise time",
+        "Transit time",
+        "Set time",
+        "Vmag",
+        "Helio Range au",
+    ]
 
     observable_tree.heading("#0", text="Select")
     observable_tree.column("#0", width=50, stretch=False, anchor="center")
@@ -381,42 +463,46 @@ def create_window(root):
         if selection:
             index = selection[0]
             selected_name = event.widget.get(index)
-            if selected_name.startswith('(') and selected_name.endswith(')'):
-                        selected_name =  selected_name.strip('()')
+            if selected_name.startswith("(") and selected_name.endswith(")"):
+                selected_name = selected_name.strip("()")
             else:
-                selected_name  = selected_name.split(" ")[0]
+                selected_name = selected_name.split(" ")[0]
             designation_entry.delete(0, tk.END)
             designation_entry.insert(0, selected_name)
 
     selected_listbox.bind("<<ListboxSelect>>", on_listbox_select)
 
-    tk.Label(tab_ephemeris,text="Altitude:").place(x=10, y=80)
+    tk.Label(tab_ephemeris, text="Altitude:").place(x=10, y=80)
     tk.Label(tab_ephemeris, text="Azimuth").place(x=10, y=100)
 
     telescope_comms = tk.Text(tab_ephemeris, wrap="word")
     telescope_comms.place(x=10, y=140, width=250, height=70)
     telescope_comms.insert("1.0", "Telescope Comms will apear here")
 
-
     def remove_selected():
         selected_indices = selected_listbox.curselection()
-        for index in reversed(selected_indices):  # Reverse so we don't mess up indices when deleting
+        for index in reversed(
+            selected_indices
+        ):  # Reverse so we don't mess up indices when deleting
             selected_listbox.delete(index)
-    ttk.Button(tab_neos, text="Remove", command=remove_selected).place(x=800, y=350, width=100)
+
+    ttk.Button(tab_neos, text="Remove", command=remove_selected).place(
+        x=800, y=350, width=100
+    )
     btn_add = ttk.Button(tab_neos, text="Add")
     btn_add.place(x=650, y=350, width=50, height=30)
 
     def goto():
         print("Going to Asteroid")
-        #pwi4 = PWI4()
-        #if not pwi4.status().mount.is_connected:
-            #pwi4.mount_connect()
-        #pwi4.mount_radecpath_new()
-        #for jd, ra, dec in points:
-            #pwi4.mount_radecpath_add_point(jd, ra, dec)
-        #pwi4.mount_radecpath_apply()
+        # pwi4 = PWI4()
+        # if not pwi4.status().mount.is_connected:
+        # pwi4.mount_connect()
+        # pwi4.mount_radecpath_new()
+        # for jd, ra, dec in points:
+        # pwi4.mount_radecpath_add_point(jd, ra, dec)
+        # pwi4.mount_radecpath_apply()
 
-    ttk.Button(tab_ephemeris, text="GO TO", command=goto).place(x=180,y=80)
+    ttk.Button(tab_ephemeris, text="GO TO", command=goto).place(x=180, y=80)
 
     def on_location_change():
         if location_var.get() == "Custom":
@@ -428,11 +514,11 @@ def create_window(root):
 
     def update_location_label():
         locations = {
-            "AUTH-1": ('40.5624', '22.9956', '68'),
-            "AUTH-2": ('40.43291', '23.5055', '800'),
-            "AUTH-3": ('34.932056', '32.840167', '1411')
+            "AUTH-1": ("40.5624", "22.9956", "68"),
+            "AUTH-2": ("40.43291", "23.5055", "800"),
+            "AUTH-3": ("34.932056", "32.840167", "1411"),
         }
-        lat, lon, h = locations.get(location_var.get(), ('', '', ''))
+        lat, lon, h = locations.get(location_var.get(), ("", "", ""))
         lat_entry.delete(0, tk.END)
         lat_entry.insert(0, lat)
         lon_entry.delete(0, tk.END)
@@ -442,7 +528,9 @@ def create_window(root):
 
     location_combobox.bind("<<ComboboxSelected>>", lambda e: on_location_change())
 
-    def update_live_altaz(minor_planet, observer, alt_var, az_var, ephemeris_window,dt):
+    def update_live_altaz(
+        minor_planet, observer, alt_var, az_var, ephemeris_window, dt
+    ):
         def update():
             now = ts.now()
             app = observer.at(now).observe(minor_planet).apparent()
@@ -451,6 +539,5 @@ def create_window(root):
             alt_var.set(f"{alt.degrees:.2f}°")
             az_var.set(f"{az.degrees:.2f}°")
             altaz_job["id"] = ephemeris_window.after(3000, update)
+
         update()
-
-

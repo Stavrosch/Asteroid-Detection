@@ -2,16 +2,17 @@ from skyfield.data import mpc
 import pandas as pd
 import os
 
-script_dir = os.path.dirname(os.path.abspath(__file__))
-mpcorb_dat_path = os.path.join(script_dir, 'MPCORB.DAT')
-output_pkl_path = os.path.join(script_dir, 'mpcorb_df.pkl')
+DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../data")
 
-with open(mpcorb_dat_path, 'r') as f:
+mpcorb_dat_path = os.path.join(DATA_DIR, "mpcorb.dat")
+output_pkl_path = os.path.join(DATA_DIR, "mpcorb_df.pkl")
+
+with open(mpcorb_dat_path, "r") as f:
     for line_num, line in enumerate(f):
-        if line.startswith('--------'):
+        if line.startswith("--------"):
             break
 
-with open(mpcorb_dat_path, 'rb') as f:
+with open(mpcorb_dat_path, "rb") as f:
     for _ in range(line_num + 1):
         next(f)
     df = mpc.load_mpcorb_dataframe(f)
@@ -49,6 +50,6 @@ print(df.head())
 print("\nRandom 5 objects:")
 print(df.sample(5))
 
-if len(df.select_dtypes(include='number').columns) > 0:
+if len(df.select_dtypes(include="number").columns) > 0:
     print("\nBasic statistics:")
     print(df.describe())
