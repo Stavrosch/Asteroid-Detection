@@ -1,3 +1,7 @@
+# Data preparation
+
+[Back to README](README.md) • [Docker guide](DOCKER_MANUAL.md)
+
 This repository relies on a few additional data files that are not distributed
 with the code.  They need to be downloaded or generated and placed in the
 locations shown below:
@@ -16,7 +20,7 @@ locations shown below:
    ```
    python pickler.py
    ```
-   inside the Utilities folder :
+   inside the `GUIs/Utilities/` folder :
 
    The resulting `mpcorb_df.pkl` should be already placed in `GUIs/Utilities`.
 
@@ -45,5 +49,4 @@ locations shown below:
    print('Ready')
     ```
 **This is already done by the script automatically and dowloaded only the first time.**
-
 

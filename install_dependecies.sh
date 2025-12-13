@@ -116,7 +116,7 @@ fi
 # -----------------------------
 # Step 3: Download and process data files
 # -----------------------------
-DATA_DIR="GUIs/Utilities"
+DATA_DIR="data/"
 mkdir -p "$DATA_DIR"
 
 MAX_ATTEMPTS=4
@@ -151,7 +151,7 @@ while [ $ATTEMPT -lt $MAX_ATTEMPTS ]; do
         gunzip MPCORB.DAT.gz
         gunzip astorb.dat.gz
 
-        mv MPCORB.DAT "$DATA_DIR/"
+        mv MPCORB.DAT "$DATA_DIR/mpcorb.dat"
         mv astorb.dat "$DATA_DIR/"
 
         echo " Processing data files..."

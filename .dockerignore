@@ -1,0 +1,21 @@
+# Ignore local env and config
+.env
+*.env
+
+# Ignore downloaded data (we’ll handle it in Dockerfile)
+data/
+
+# Ignore unnecessary files
+__pycache__/
+*.pyc
+*.pyc
+*.pyo
+*.swp
+*.tmp
+.git
+.gitignore
+.astropy
+.venv
+.vscode
+.github
+Dockerfile
