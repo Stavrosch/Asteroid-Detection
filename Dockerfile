@@ -3,74 +3,57 @@ FROM python:3.11-slim-bullseye
 ARG DEBIAN_FRONTEND=noninteractive
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
-    HOME=/home/docker \
     LANG=C.UTF-8 \
     LC_ALL=C.UTF-8 \
-    PATH=/home/docker/.local/bin:/usr/local/bin:$PATH
+    DATA_DIR=/data
 
 # -----------------------------
-# System dependencies
+# System + GUI (noVNC) dependencies
 # -----------------------------
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential gcc gfortran git wget curl ca-certificates pkg-config \
-    libblas-dev liblapack-dev libatlas-base-dev \
-    libfreetype6-dev libpng-dev \
-    libx11-6 libxext6 libxrender1 libsm6 \
+    # build tools (keep if you compile wheels)
+    build-essential gcc gfortran pkg-config \
+    # common runtime utils
+    ca-certificates curl wget git procps \
+    # GUI stack
+    xvfb x11vnc fluxbox novnc websockify \
+    # X11 libs often needed by GUI toolkits
+    libx11-6 libxext6 libxrender1 libsm6 libice6 \
+    libgl1 \
+    # optional: Tkinter support (safe even if unused)
     python3-tk tk tcl \
-    x11-utils xauth xvfb \
-    procps \
-    gzip \
+    # fonts
+    fonts-dejavu-core \
+    # Windows CRLF fixer
+    dos2unix \
     && rm -rf /var/lib/apt/lists/*
 
 # -----------------------------
-# Non-root user
+# Python deps
 # -----------------------------
-ARG UID=1000
-ARG GID=1000
-RUN groupadd -g $GID docker && \
-    useradd -m -u $UID -g $GID -s /bin/bash docker && \
-    chown -R docker:docker /home/docker
+WORKDIR /app
+COPY requirements.txt /app/requirements.txt
+RUN pip install --no-cache-dir -r /app/requirements.txt
 
 # -----------------------------
-# Python dependencies
+# App code + scripts
 # -----------------------------
-COPY requirements.txt /tmp/requirements.txt
-RUN pip install --no-cache-dir -r /tmp/requirements.txt
+COPY README.md /app/README.md
+COPY DOCKER_MANUAL.md /app/DOCKER_MANUAL.md
+COPY GUIs/ /app/GUI/
+COPY demo-fits/ /app/demo-fits/
+COPY entrypoint.sh /app/entrypoint.sh
+COPY startup.sh /app/startup.sh
 
-# -----------------------------
-# App code
-# -----------------------------
-WORKDIR /home/docker/app
-COPY --chown=docker:docker . /home/docker/app
+# Ensure scripts are runnable on Linux (even if edited on Windows)
+RUN dos2unix /app/entrypoint.sh /app/startup.sh \
+    && chmod +x /app/entrypoint.sh /app/startup.sh
 
-# -----------------------------
-# Download public data during build
-# -----------------------------
-RUN mkdir -p GUIs/Utilities && \
-    wget -q -O GUIs/Utilities/MPCORB.DAT.gz http://minorplanetcenter.net/iau/MPCORB/MPCORB.DAT.gz && \
-    gunzip -f GUIs/Utilities/MPCORB.DAT.gz && \
-    wget -q -O GUIs/Utilities/astorb.dat.gz https://ftp.lowell.edu/pub/elgb/astorb.dat.gz && \
-    gunzip -f GUIs/Utilities/astorb.dat.gz && \
-    # Preprocess with pickler.py
-    python GUIs/Utilities/pickler.py
+# Mounted runtime data directory (host bind mount recommended)
+VOLUME ["/data"]
 
+# noVNC web port
+EXPOSE 6080
 
-# -----------------------------
-# Entrypoint + scripts
-# -----------------------------
-COPY entrypoint.sh /home/docker/entrypoint.sh
-COPY startup.sh /home/docker/startup.sh
-RUN chmod +x /home/docker/entrypoint.sh /home/docker/startup.sh \
-    && chown docker:docker /home/docker/entrypoint.sh /home/docker/startup.sh
-
-# -----------------------------
-# Switch to non-root
-# -----------------------------
-USER docker
-WORKDIR /home/docker/app
-
-# -----------------------------
-# Entrypoint + default CMD
-# -----------------------------
-ENTRYPOINT ["/home/docker/entrypoint.sh"]
-CMD ["./startup.sh"]
+ENTRYPOINT ["/app/entrypoint.sh"]
+CMD ["/app/startup.sh"]

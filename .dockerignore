@@ -3,13 +3,11 @@
 *.env
 
 # Ignore downloaded data (we’ll handle it in Dockerfile)
-GUIs/Utilities/MPCORB.DAT
-GUIs/Utilities/astorb.dat
-GUIs/Utilities/*.pkl
-#de421.bsp
+data/
 
 # Ignore unnecessary files
 __pycache__/
+*.pyc
 *.pyc
 *.pyo
 *.swp
