@@ -1,71 +1,91 @@
 # 🔭 Astro-GUI Docker 🐳
 
-This Docker image provides a dedicated application for **asteroid detection**, developed in the context of a Master’s thesis by [@Stavrosch](https://github.com/Stavrosch). The application is written in **Python** and features a user-friendly GUI for its operation.  
+[Back to README](README.md) • [Data preparation](DATA_PREPARATION.md)
 
-The image is built from the [Asteroid-Detection](https://github.com/Stavrosch/Asteroid-Detection) repository.
+This guide explains how to run the **Asteroid-Detection** GUI in Docker using **noVNC** (GUI in your browser). This approach avoids host-specific X11 setup and works consistently across Linux, macOS, and Windows hosts (Docker Desktop).
 
 ---
 
 ## 🚀 Quickstart
 
-### Image creation
+### 1) Build the image
 
-#### Option 1: 🛠️ Build the image
-
-You can build the image locally using the provided `Dockerfile`:
+From the project root (where the `Dockerfile` is):
 
 ```bash
-docker build \
-  --build-arg UID=$(id -u) \
-  --build-arg GID=$(id -g) \
-  -t <your-image-name> .
+docker build -t gui_app .
 ```
 
-#### Option 2: 📦 Pull the image
+### 2) Prepare a data folder (recommended)
 
-**ATTENTION**: Pre-built images are currently unavailable as this feature is under development.
-
-When available, you will be able to pull them from GitHub or Docker Hub:
+Create a local folder to persist downloaded/generated files:
 
 ```bash
-# 1st github option
-docker pull ghcr.io/stavrosch/asteroid-detection:<tag>
-
-# 2nd option Dockerhub
-docker pull mchadolias/asteroid-detection
+mkdir -p data
 ```
 
-### 🏁 Run the image
+### 3) Run the container
 
-The default entrypoint (`startup.sh`) checks for your API key and launches the GUI (`GUI_main.py`).
-
-Basic run command:
+Mount your local `data/` to the container’s expected path (adjust if your app uses a different location):
 
 ```bash
-docker run -it --rm \
-  -e DISPLAY=$DISPLAY \
-  -v /tmp/.X11-unix:/tmp/.X11-unix \
-  -v $(pwd):/home/docker/app \
-  <name-your-own-image>
+docker run --rm -p 6080:6080 \
+  -v "$PWD/data:/app/data" \
+  gui_app
 ```
 
-Alternatively, you can use the helper script:
+Then open:
 
-```bash
-./run_docker.sh
-```
+- `http://localhost:6080/vnc.html`
 
-For more information check the `run_docker.sh` script. If you are wondering how it works.
+> If you open `http://localhost:6080/` you may see a 404 depending on your noVNC package version; `vnc.html` is the safe entry point.
 
 ---
 
-## 🧰 Dependencies
+## 🔑 Astrometry.net API key
 
-- Base image [Python 3.11-slim-bullseye](https://hub.docker.com/_/python)
-- Additional Python packages for astronomy and GUI development.
+The application uses `ASTROMETRY_API_KEY` for online plate solving.
+
+Choose one of the following:
+
+### Option A: pass as an environment variable
+
+```bash
+docker run --rm -p 6080:6080 \
+  -e ASTROMETRY_API_KEY="YOUR_KEY_HERE" \
+  -v "$PWD/data:/app/data" \
+  gui_app
+```
+
+### Option B: mount a `.env` file (recommended for non-interactive use)
+
+Create a `.env` file next to your Dockerfile:
+
+```env
+ASTROMETRY_API_KEY=YOUR_KEY_HERE
+```
+
+Run:
+
+```bash
+docker run --rm -p 6080:6080 \
+  -v "$PWD/data:/app/data" \
+  -v "$PWD/.env:/app/.env:ro" \
+  gui_app
+```
+
+---
+
+## 🧰 Notes
+
+- **Data files**: some tools require catalogue files (e.g. MPCORB and ASTORB). See [DATA_PREPARATION.md](DATA_PREPARATION.md).
+- **Fullscreen**: open the noVNC side menu and use **Fullscreen**, and enable **Scaling**. If the virtual desktop is too small, increase the Xvfb resolution in `entrypoint.sh` (e.g. `1920x1080x24`).
+- **Fedora host**: no special X11/Wayland steps are required with noVNC.
 
 ---
 
 ## ⚠️ Disclaimer
 
-This Docker setup is experimental and may not work as expected in all environments. Please report any issues or suggestions to [GitHub](https://github.com/Stavrosch/Asteroid-Detection/issues), or contact the docker developer directly at [@mchadolias](https://github.com/mchadolias) or the main developer [@Stavrosch](https://github.com/Stavrosch).
+This Docker setup is experimental. Please report issues via the upstream repository’s issue tracker, or contact the docker developer directly.
+
+*Docker Developer* [@mchadolias](https://github.com/mchadolias)

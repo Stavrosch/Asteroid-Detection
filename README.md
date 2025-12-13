@@ -7,6 +7,12 @@
 Toolkit created as part of an MSc thesis on automatic asteroid detection. The repository contains a set of graphical utilities for analysing FITS images, tracking known asteroids and plate solving observations.
 ![Asteroid-Detection Demo](demo.gif) 
 
+## Documentation
+
+- **Docker**: see [DOCKER_MANUAL.md](DOCKER_MANUAL.md) for building and running the GUI in a container (noVNC).
+- **Data files**: see [DATA_PREPARATION.md](DATA_PREPARATION.md) for downloading/generating the catalogues required by *Track Asteroid*.
+
+
 ## Requirements
 
 - **Python**: version 3.11 or later is recommended.
@@ -35,7 +41,7 @@ Toolkit created as part of an MSc thesis on automatic asteroid detection. The re
 
      - Online (Astrometry.net API):
          - Get an API key from https://nova.astrometry.net/api_help
-         - Add the API key to your code by going to GUIs/Utilities/ps_API.py (line 24) and editing it.
+         - Add the API key to your code by going to app/Utilities/ps_API.py (line 24) and editing it.
        
               Replacing this :
                        
@@ -51,13 +57,13 @@ Toolkit created as part of an MSc thesis on automatic asteroid detection. The re
                 https://astrometry.net/doc/build.html#build
 
   - Set up data files
-      - Several tools depend on a pickled catalogue of minor planet orbits named `GUIs/Utilities/mpcorb_df.pkl` and others. This file is not included in the repository.
+      - Several tools depend on a pickled catalogue of minor planet orbits named `app/Utilities/mpcorb_df.pkl` and others. This file is not included in the repository.
         See [DATA_PREPARATION.md](DATA_PREPARATION.md) for instructions on downloading the MPCORB catalogue from the Minor Planet Center and generating the pickle.
 ## Running
 
-Launch the application by running inside the GUIs folder:
+Launch the application from the project root:
 
 ```
-python GUI_main.py
+python app/GUI_main.py
 ```
 <img width="515" height="365" alt="bkgr-1" src="https://github.com/user-attachments/assets/bfee776c-b765-4f84-a260-07974401bca4" />

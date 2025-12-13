@@ -38,8 +38,7 @@ RUN pip install --no-cache-dir -r /app/requirements.txt
 # -----------------------------
 # App code + scripts
 # -----------------------------
-COPY README.md /app/README.md
-COPY DOCKER_MANUAL.md /app/DOCKER_MANUAL.md
+COPY *.md /app/
 COPY GUIs/ /app/GUI/
 COPY demo-fits/ /app/demo-fits/
 COPY entrypoint.sh /app/entrypoint.sh
